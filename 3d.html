@@ -1,0 +1,303 @@
+<body>
+  <script src = "/allSiteLib/three.js"></script>
+  <script src = "/allSiteLib/OrbitControls.js"></script>
+  <script src="//js.leapmotion.com/0.2.0/leap.min.js"></script>
+  <script src ="gl-matrix-min.js"></script>
+
+<script>
+
+  var scene = new THREE.Scene();
+  var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 10 );
+
+  camera.position.z = 3;
+
+  var controls = new THREE.OrbitControls( camera );
+
+  var renderer = new THREE.WebGLRenderer();
+  renderer.setSize( window.innerWidth, window.innerHeight );
+  document.body.appendChild( renderer.domElement );
+
+  var geo = new THREE.CubeGeometry( 1 , 1 , 1 );
+
+  var material = new THREE.MeshNormalMaterial({ wireframe: true });
+
+  var mesh = new THREE.Mesh( geo , material );
+
+  mesh.position.x = .5;
+  mesh.position.y = .5;
+  mesh.position.z = .5;
+
+  scene.add( mesh );
+
+
+  var planeMesh = new THREE.Mesh(
+    new THREE.PlaneGeometry( 2 , 2 ),
+    new THREE.MeshNormalMaterial({ side:THREE.DoubleSide, transparent: true , opacity:.4})
+  );
+
+  scene.add( planeMesh );
+  function render() {
+  
+    requestAnimationFrame(render);
+    controls.update();
+	renderer.render(scene, camera);
+ 
+  }
+  
+  render();
+
+
+
+  var equations = [
+
+    // X = 0 
+    [ 1 , 0 , 0 , 0 ],
+
+    // X = 1
+    [ 1 , 0 , 0 , 1 ],
+
+    // Y = 0
+    [ 0 , 1 , 0 , 0 ],
+
+    // Y = 1
+    [ 0 , 1 , 0 , 1 ],
+
+    // Z = 0
+    [ 0 , 0 , 1 , 0 ],
+
+    // Z = 1
+    [ 0 , 0 , 1 , 1 ],
+
+
+
+
+  ]
+
+  // Equation of the line we are solving for
+  var plane = [ 1 , 5 , -5.331 , .5133 ];
+
+  var normal = [ plane[0] , plane[1] , plane[2] ];
+
+
+
+
+  function intersect( plane , face1 , face2 ){
+
+      var matrix = [
+        plane[0] , plane[1] , plane[2],
+        face1[0] , face1[1] , face1[2],
+        face2[0] , face2[1] , face2[2]
+      ]
+
+      var transpose  = [];
+
+      mat3.transpose( transpose , matrix );
+
+      var inverse = [];
+
+      mat3.invert( inverse , transpose );
+
+      var rightHandSide = [ plane[3], face1[3] , face2[3] ];
+
+      var solution = [];
+
+      vec3.transformMat3( solution , rightHandSide , inverse );
+
+      //console.log( solution );
+
+      return solution;
+    
+  }
+
+  function loopThroughIntersections(){
+
+    var intersections = [];
+
+    for( var i = 0; i < equations.length; i ++){
+
+      for( var j=0; j< equations.length; j++ ){
+
+        /* 
+          This section makes sure that we don't 
+          compare planes that don't have intersections
+        */
+        if( i % 2 == 0 && j == i+1 ){
+          //console.log( i + " " + j );
+          continue;
+        }else if(  i % 2 == 1 && j == i-1 ){
+          //console.log( i + " " + j );
+          continue;
+        }else if( i == j ){
+          //console.log( i + " " + j );
+          continue;
+        }
+
+        
+        // Solution of intersection of our plane
+        // with the line that is made from the 2 edges
+        var p = intersect( plane , equations[i] , equations[j] );
+
+        if( 
+          p[0] <= 1 && p[0] >= 0 &&
+          p[1] <= 1 && p[1] >= 0 &&
+          p[2] <= 1 && p[2] >= 0
+        ){
+          intersections.push( p );
+        }
+
+
+      }
+
+    }
+
+    return intersections;
+
+  }
+
+
+  function drawIntersections(){
+
+    var material = new THREE.ParticleBasicMaterial({ color: 0xff0000 });
+    material.size = .1;
+
+    var geo = new THREE.Geometry();
+
+
+    // Get all the intersection points
+    var points = loopThroughIntersections();
+
+    // loop through all the points, adding them to the geo of the 
+    // particle system
+    for( var i = 0; i < points.length; i++ ){
+
+      var p = points[i];
+      var vert = new THREE.Vector3( p[0] , p[1] , p[2] );
+      geo.vertices.push( vert );
+
+    }
+
+    var pSystem = new THREE.ParticleSystem( geo , material );
+
+    scene.add( pSystem );
+
+  }
+
+
+
+  function rotateToZ( input ){
+
+
+    var solution = [];
+
+    // Vector that is perp to both z and N
+    var R = [];
+
+    // Normal of Plane
+    var N = [ input[0] , input[1], input[2] ];
+
+    // Normalized N
+    var n = [];
+    vec3.normalize( n , N );
+
+    // Z axis
+    var zAxis = [0 , 0 , 1];
+
+    vec3.cross( R , zAxis, n );
+
+    if( R != [ 0 , 0 , 0 ] ){
+
+      // Normalized r
+      var r = [];
+      vec3.normalize( r , R );
+
+      // z component of n
+      var a = n[2];
+
+      var b = Math.sqrt( 1 - ( a * a ) );
+
+      // The cross of r and 0 0 1
+      var cross = [];
+
+      vec3.cross( cross, r , [ 0 , 0 , 1] );
+
+      var crossNormal =[];
+
+      vec3.normalize( crossNormal , cross );
+
+      // Setting up a matrix to transpose
+      var A = [
+        0 , crossNormal[0] , r[0],
+        0 , crossNormal[1] , r[1],
+        1 , crossNormal[2] , r[2]
+      ]
+      
+      var u = [
+         a , b , 0 ,
+        -b , a , 0 ,
+         0 , 0 , 1
+      ]
+
+      var AInverse = [];
+
+      mat3.invert( AInverse , A );
+
+      var step1 = [];
+
+      mat3.multiply( step1 , A , u );
+
+      mat3.multiply( solution , step1 , AInverse );
+
+
+    }else{
+      solution = mat3.create();
+    }
+
+    console.log(solution);
+
+    var s = solution;
+
+    var matrix = new THREE.Matrix3();
+
+
+    matrix.set(
+      s[0] , s[1] , s[2],
+      s[3] , s[4] , s[5],
+      s[6] , s[7] , s[8]
+    )
+
+    console.log('ROT MATRIX');
+    console.log( planeMesh.matrix );
+
+    var output = [];
+
+    var transpose =[];
+    mat3.transpose( transpose , solution );
+
+    vec3.transformMat3( output , n , solution );
+    console.log('ZZZZ');
+    console.log(output);
+
+
+    console.log( matrix );
+    planeMesh.rotation.setFromRotationMatrix( matrix );
+
+    planeMesh.rotation.x = Math.PI;
+    if( planeMesh.rotation.x == NaN ){
+      console.log( 'CRAP' );
+    }
+
+    console.log(planeMesh.rotation);
+
+
+    return solution;
+
+  }
+
+
+
+ 
+  drawIntersections();
+
+</script>
+
+</body>

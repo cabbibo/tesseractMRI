@@ -1,0 +1,312 @@
+
+<canvas id="canvasSlice"></canvas>
+<canvas id="canvasLine"></canvas>
+<!--<script src="//js.leapmotion.com/0.2.0/leap.min.js"></script>-->
+<script src="/allSiteLib/leap.js"></script>
+<script src ="gl-matrix-min.js"></script>
+<script>
+
+  var canvasSlice = document.getElementById( 'canvasSlice');
+  var canvasLine  = document.getElementById( 'canvasLine' );
+  var cS = canvasSlice.getContext( '2d' );
+  var cL = canvasLine.getContext( '2d' );
+
+  var widthCanvasSlice  = canvasSlice.width;
+  var heightCanvasSlice = canvasSlice.height;
+
+  var widthCanvasLine   = canvasLine.width;
+  var heightCanvasLine  = canvasLine.height;
+
+  var intersections = [];
+
+
+  //GLOBAL VARS
+
+  var frame;
+
+
+  var equations = [
+
+    // X = 0 
+    [ 1 , 0 , 0 ],
+
+    // X = 1
+    [ 1 , 0 , 1 ],
+
+    // Y = 0
+    [ 0 , 1 , 0 ],
+
+    // Y = 1
+    [ 0 , 1 , 1 ]
+
+  ]
+
+  // Equation of the line we are solving for
+  var line = [ .2 , 1 , .5 ];
+
+  function drawLine( line ){
+
+    for( var i = 0; i < 10; i++){
+
+      var slope = line[1]/line[0];
+      var x = i;
+      //var y = 
+
+
+    }
+
+  }
+
+  function intersect( line ,  edge ){
+
+    /* Solving the set of linear equation:
+
+      // equation for line
+      x + y = offset 
+
+      //equation for edge
+      x + y = offset
+
+      ( will be either x = 0 , x = 1 , y = 0 or y = 1)
+
+      Solving via matrix multiplication:
+       _       _    _         _      _       _
+      | x  , y  |  | solutionX |  = | offset  |
+      | x1 , y1 |  | solutionY |  = | offset1 |
+      
+      OR
+       _         _                 _       _
+      | solutionX |  =  Inverse   | offset  |
+      | solutionY |  =  of Matrix | offset1 |
+
+    */
+
+    var matrix        = [
+                          line[0] , line[1] ,
+                          edge[0] , edge[1]
+                        ]
+    var rightHandSide = [ line[2] , edge[2] ];
+    var transpose     = [];
+    var inverse       = []; 
+    var solution      = [];
+
+    mat2.transpose( transpose , matrix );
+    mat2.invert( inverse , transpose ); 
+
+    //console.log( inverse );
+
+    vec2.transformMat2( solution, rightHandSide, inverse );
+
+    //console.log( solution );
+
+    return solution;
+
+  }
+
+  function loopThroughIntersections(){
+
+    intersections = [];
+
+    for( var i = 0; i < equations.length; i ++){
+
+      // Solution of intersection
+      var p = intersect( line , equations[i] );
+      //console.log( p );
+
+      if( 
+        p[0] <= 1 && p[0] >= 0 &&
+        p[1] <= 1 && p[1] >= 0 
+      ){
+        intersections.push( p );
+      }
+
+    }
+
+    return intersections
+
+  }
+
+
+  function unitToCanvas(point){
+
+    // Center in coord system
+    var x = point[0] - .5;
+    var y = point[1] - .5;
+
+    // Scale it up
+    x *= heightCanvasSlice/2;
+    y *= -heightCanvasSlice/2;
+
+    // Center in canvas
+    x += widthCanvasSlice/2;
+    y += heightCanvasSlice/2;
+   
+    return [ x , y ];
+  
+  }
+
+  function drawIntersections(){
+
+    var points = loopThroughIntersections();
+
+    for( var i = 0; i < points.length; i++ ){
+
+      var coord = unitToCanvas(points[i]);
+      cS.beginPath();
+      cS.arc( coord[0] , coord[1] , 3 , 0 , 2*Math.PI , false );
+      cS.fill();
+
+    }
+
+  }
+
+  function drawSquare(){
+
+    var coords = [];
+
+    var points = [
+
+      [0,0],
+      [1,0],
+      [1,1],
+      [0,1]
+    ]
+    for( var i = 0; i < equations.length; i ++ ){
+      var p = points[i];
+      var point = [ p[0] , p[1]]
+      var coord = unitToCanvas( point );
+      coords.push( coord );
+      
+
+    }
+
+    //console.log( coords );
+    cS.beginPath();
+    cS.moveTo( coords[1][0] , coords[1][1]);
+    cS.lineTo( coords[2][0] , coords[2][1]);
+    cS.lineTo( coords[3][0] , coords[3][1]);
+    cS.lineTo( coords[0][0] , coords[0][1]);
+    cS.lineTo( coords[1][0] , coords[1][1]);
+    cS.stroke();
+
+  }
+
+
+  /*
+
+    drawing the points on second canvas
+
+  */
+
+
+   function unitToLineCanvas(point){
+
+    // Center in coord system
+    var x = point[0]// - .5;
+    var y = point[1]// - .5;
+
+    // Scale it up
+    x *= heightCanvasLine/2;
+    y *= -heightCanvasLine/2;
+
+    // Center in canvas
+    x += widthCanvasLine/2;
+    y += heightCanvasLine/2;
+   
+    return [ x , y ];
+  
+  }
+
+  function drawLine(){
+
+    var length = 0;
+
+    if( intersections.length == 2 ){
+
+      var p1 = intersections[0];
+      var p2 = intersections[1];
+
+      var dif = [
+        p2[0] - p1[0],
+        p2[1] - p1[1]
+      ];
+
+      var d = Math.sqrt( ( dif[0] * dif[0] ) + (dif[1] * dif[1]) );
+
+      //console.log( d );
+
+
+      p1 = unitToLineCanvas( [-d/2 , 0 ] );
+      p2 = unitToLineCanvas( [ d/2 , 0 ] );
+
+      cL.beginPath();
+      cL.arc( p1[0] , p1[1] , 3 , 0 , 2*Math.PI , false );
+      cL.fill();
+
+  
+      cL.beginPath();
+      cL.arc( p2[0] , p2[1] , 3 , 0 , 2*Math.PI , false );
+      cL.fill();
+    }
+    
+  }
+
+  var controller = new Leap.Controller();
+
+  controller.on( 'frame' , function( data ){
+
+    frame = data;
+
+    // Setting up some steez
+    cS.lineWidth = 3;
+    cS.strokeStyle = '#000000';
+
+    cS.fillStyle = 'red';
+    cS.fillRect( 0 , 0 , widthCanvasSlice , heightCanvasSlice );
+
+    cS.fillStyle = 'white';
+
+
+    if( frame.hands[0] ){
+
+      var hand = frame.hands[0];
+      
+      var dir = hand.direction;
+
+      var y = dir[1];
+      var z = dir[2];
+
+      var offset = hand.palmPosition[1];
+
+
+      line[0] = y;
+      line[1] = z;
+
+      line[2] = - (offset-frame.interactionBox.center[1]) / 100;
+    }
+
+
+    drawSquare();
+    drawIntersections();
+
+
+    // Setting up some steez
+    cL.lineWidth = 3;
+    cL.strokeStyle = '#000000';
+
+    cL.fillStyle = 'green';
+    cL.fillRect( 0 , 0 , widthCanvasSlice , heightCanvasSlice );
+
+    cL.fillStyle = 'white';
+
+
+    drawLine();
+    
+
+  });
+
+  controller.connect();
+
+</script>
+
+
