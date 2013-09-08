@@ -1,11 +1,50 @@
 <body>
   <script src = "/allSiteLib/three.js"></script>
   <script src = "/allSiteLib/OrbitControls.js"></script>
-  <script src="//js.leapmotion.com/0.2.0/leap.min.js"></script>
+  <script src = "/allSiteLib/leap.js"></script>
+  <!--<script src="//js.leapmotion.com/0.2.0/leap.min.js"></script>-->
   <script src ="gl-matrix-min.js"></script>
 
+  <div id="container"></div>
+  <canvas  style = "position: absolute; bottom:0px; right:0px; width:100px; height:100px;"id="2d"></canvas>
+  
 <script>
 
+  /*
+  
+  GLOBAL VARS
+
+  */
+
+  var frame;
+
+  // The system that we are using to map the intersections
+
+  // A List of all intersections
+  var intersections = [];
+
+  // The particle system we are using to map the intersections
+  var pSystem;
+
+  // The container for our 3D renderer
+  var container = document.getElementById( 'container' );
+
+  // The canvas used to show the 2D slices
+  var canvas = document.getElementById( '2d' );
+  var c = canvas.getContext( '2d' );
+
+  canvas.height = canvas.clientHeight;
+  canvas.width  = canvas.clientWidth;
+  c.width = canvas.width;
+  c.height = canvas.height;
+
+
+  /* 
+  
+  THREE.js Setup
+  
+  */
+  
   var scene = new THREE.Scene();
   var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 10 );
 
@@ -15,7 +54,8 @@
 
   var renderer = new THREE.WebGLRenderer();
   renderer.setSize( window.innerWidth, window.innerHeight );
-  document.body.appendChild( renderer.domElement );
+  
+  container.appendChild( renderer.domElement );
 
   var geo = new THREE.CubeGeometry( 1 , 1 , 1 );
 
@@ -36,6 +76,7 @@
   );
 
   scene.add( planeMesh );
+  
   function render() {
   
     requestAnimationFrame(render);
@@ -74,7 +115,7 @@
   ]
 
   // Equation of the line we are solving for
-  var plane = [ 1 , 5 , -5.331 , .5133 ];
+  var plane = [ 1 , 1 , 0 , .5];
 
   var normal = [ plane[0] , plane[1] , plane[2] ];
 
@@ -111,11 +152,11 @@
 
   function loopThroughIntersections(){
 
-    var intersections = [];
+    var intersectedPoints = [];
 
     for( var i = 0; i < equations.length; i ++){
 
-      for( var j=0; j< equations.length; j++ ){
+      for( var j = i; j < equations.length; j++ ){
 
         /* 
           This section makes sure that we don't 
@@ -142,7 +183,7 @@
           p[1] <= 1 && p[1] >= 0 &&
           p[2] <= 1 && p[2] >= 0
         ){
-          intersections.push( p );
+          intersectedPoints.push( p );
         }
 
 
@@ -150,13 +191,23 @@
 
     }
 
-    return intersections;
+    return intersectedPoints;
 
   }
 
 
+  /*
+
+  this sec
+    
+  */
   function drawIntersections(){
 
+    if(pSystem ){
+      scene.remove( pSystem );
+    }
+
+    //console.log( 's') ;
     var material = new THREE.ParticleBasicMaterial({ color: 0xff0000 });
     material.size = .1;
 
@@ -164,27 +215,227 @@
 
 
     // Get all the intersection points
-    var points = loopThroughIntersections();
+    intersections = loopThroughIntersections();
 
     // loop through all the points, adding them to the geo of the 
     // particle system
-    for( var i = 0; i < points.length; i++ ){
+    //console.log( intersections.length );
+    for( var i = 0; i < intersections.length; i++ ){
 
-      var p = points[i];
+      var p = intersections[i];
+
+      //console.log( p );
       var vert = new THREE.Vector3( p[0] , p[1] , p[2] );
       geo.vertices.push( vert );
 
     }
 
-    var pSystem = new THREE.ParticleSystem( geo , material );
+    pSystem = new THREE.ParticleSystem( geo , material );
 
     scene.add( pSystem );
 
   }
 
 
+  function mapToPlane( point ){
 
-  function rotateToZ( input ){
+    var zAxis   = [   0      ,    0     ,    1     ];
+    var normal  = [ plane[0] , plane[1] , plane[2] ];
+
+    var vector1 = [];
+    vec3.cross( vector1 , zAxis , normal );
+
+    var vector1Normalized = [];
+    vec3.normalize( vector1Normalized , vector1 );
+
+    var vector2 = [];
+    vec3.cross( vector2 , vector1Normalized , normal );
+
+    var vector2Normalized = [];
+    vec3.normalize( vector2Normalized , vector2 );
+
+
+    var A = [
+      
+      vector1Normalized[0]  , vector1Normalized[1]  , vector1Normalized[2] ,
+      vector2[0]            , vector2[1]            , vector2[2] ,
+      normal[0]             , normal[1]             , normal[2]
+
+    ];
+
+
+    var a = [
+
+    vector1Normalized[0] , vector2[0] , normal[0],
+    vector1Normalized[1] , vector2[1] , normal[1],
+    vector1Normalized[2] , vector2[2] , normal[2],
+
+
+    ]
+    
+    var newPoint = [];
+
+    vec3.transformMat3( newPoint , point , a );
+
+    //console.log( newPoint );
+
+    return newPoint;
+
+  }
+
+  function flattenPoints(){
+
+    var flatPoints = [];
+
+    for( var i = 0 ; i < intersections.length; i ++ ){
+  
+      var point = mapToPlane( intersections[i] );
+      flatPoints.push( point );
+
+    }
+
+    var points = centerPoints( flatPoints );
+
+    //console.log( points );
+
+    return flatPoints;
+
+  }
+
+  function centerPoints( points ){
+
+    var total = [ 0 , 0 , 0 ];
+
+    for( var i = 0; i < points.length; i ++ ){
+
+      var p = points[i];
+      
+      total[0] += p[0];
+      total[1] += p[1];
+      total[2] += p[2];      
+
+    }
+
+    var ave = [
+      total[0] / points.length,
+      total[1] / points.length,
+      total[2] / points.length,
+    ] 
+
+    var centeredPoints = [];
+    
+    for( var i = 0; i < points.length; i++ ){
+  
+      var nP = [
+        points[i][0] - ave[0],
+        points[i][1] - ave[1],
+        points[i][2] - ave[2],
+      ];
+
+      centeredPoints.push( nP );
+
+    }
+
+    return centeredPoints
+
+  }
+
+ 
+  //drawIntersections();
+
+
+  function drawPoints(){
+  
+    c.lineWidth = 3;
+    c.strokeStyle = '#000000';
+
+    c.fillStyle = 'red';
+    c.fillRect( 0 , 0 , c.width , c.height );
+
+    c.fillStyle = 'white';
+
+    var points = flattenPoints();
+
+    // Defines the font shape and size
+    c.font = "10px Arial";
+
+    // Tells Canvas how to align text
+    c.textAlign = 'center';
+    c.textBaseline = 'middle';
+
+
+    for( var i = 0;  i < points.length; i ++){
+
+      var p = convertToCanvas( points[i] )
+      /*c.beginPath();
+      c.arc( p[0] , p[1] , 4 , 0 , 2 * Math.PI );
+      c.fill();*/
+      
+      // Tells Canvas to draw the The number of fingers,
+      // at the center of the canvas
+      c.fillText( i , p[0] , p[1] );
+
+    }
+
+
+  }
+
+  function convertToCanvas( point ){
+
+
+    point[0]  *= c.width  / 4;
+    point[1]  *= c.height / 4;
+   // console.log( canvas.clientHeight);
+   // console.log( canvas.clientWidth);
+
+    var x = c.width  / 2 + point[0];
+    var y = c.height / 2 - point[1];
+    
+
+    return [ x , y ]
+ 
+
+  }
+
+  var frame
+
+  var controller = new Leap.Controller();
+
+  controller.on( 'frame' , function(data){
+
+    frame = data;
+
+    if( frame.hands[0] ){
+
+      var dir = frame.hands[0].palmNormal;
+
+      var yPos = frame.hands[0].palmPosition[1];
+      var offset = -( yPos -frame.interactionBox.center[1]) / 100;
+
+      plane = [ dir[0] , dir[1] , dir[2] , offset ];
+
+      drawIntersections();
+      //flattenPoints();
+      drawPoints();
+
+    }
+
+
+   
+
+
+  });
+
+  controller.connect();
+
+</script>
+
+</body>
+
+
+/*
+
+function rotateToZ( input ){
 
 
     var solution = [];
@@ -292,12 +543,4 @@
     return solution;
 
   }
-
-
-
- 
-  drawIntersections();
-
-</script>
-
-</body>
+*/
