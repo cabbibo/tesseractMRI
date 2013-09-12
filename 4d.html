@@ -1,0 +1,712 @@
+<body>
+  <script src = "/allSiteLib/three.js"></script>
+  <script src = "/allSiteLib/OrbitControls.js"></script>
+  <script src = "/allSiteLib/leap.js"></script>
+  <!--<script src="//js.leapmotion.com/0.2.0/leap.min.js"></script>-->
+  <script src ="gl-matrix-min.js"></script>
+
+  <div id="container"></div>
+  <canvas  style = "position: absolute; bottom:0px; right:0px; width:100px; height:100px;"id="2d"></canvas>
+  
+<script>
+
+  /*
+  
+  GLOBAL VARS
+
+  */
+
+  var frame;
+
+  // The system that we are using to map the intersections
+
+  // A List of all intersections
+  var intersections = [];
+
+  // The particle system we are using to map the intersections
+  var pSystem;
+
+  // The container for our 3D renderer
+  var container = document.getElementById( 'container' );
+
+  // The canvas used to show the 2D slices
+  var canvas = document.getElementById( '2d' );
+  var c = canvas.getContext( '2d' );
+
+  canvas.height = canvas.clientHeight;
+  canvas.width  = canvas.clientWidth;
+  c.width = canvas.width;
+  c.height = canvas.height;
+
+
+  /* 
+  
+  THREE.js Setup
+  
+  */
+  
+  var scene = new THREE.Scene();
+  var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 10 );
+
+  camera.position.z = 3;
+
+  var controls = new THREE.OrbitControls( camera );
+
+  var renderer = new THREE.WebGLRenderer();
+  renderer.setSize( window.innerWidth, window.innerHeight );
+  
+  container.appendChild( renderer.domElement );
+
+  /*var geo = new THREE.CubeGeometry( 1 , 1 , 1 );
+
+  var material = new THREE.MeshNormalMaterial({ wireframe: true });
+
+  var mesh = new THREE.Mesh( geo , material );
+
+  mesh.position.x = .5;
+  mesh.position.y = .5;
+  mesh.position.z = .5;
+
+  scene.add( mesh );
+
+
+  var planeMesh = new THREE.Mesh(
+    new THREE.PlaneGeometry( 2 , 2 ),
+    new THREE.MeshNormalMaterial({ side:THREE.DoubleSide, transparent: true , opacity:.4})
+  );
+
+  scene.add( planeMesh );*/
+  
+  function render() {
+  
+    requestAnimationFrame(render);
+    controls.update();
+	renderer.render(scene, camera);
+ 
+  }
+  
+  render();
+
+
+
+  var equations = [
+
+    // X = 0 
+    [ 1 , 0 , 0 , 0 , 0 ],
+
+    // X = 1
+    [ 1 , 0 , 0 , 0 , 1 ],
+
+    // Y = 0
+    [ 0 , 1 , 0 , 0 , 0 ],
+
+    // Y = 1
+    [ 0 , 1 , 0 , 0 , 1 ],
+
+    // Z = 0
+    [ 0 , 0 , 1 , 0 , 0 ],
+
+    // Z = 1
+    [ 0 , 0 , 1 , 0 , 1 ],
+
+    // W = 0
+    [ 0 , 0 , 0 , 1 , 0 ],
+
+    // W = 1
+    [ 0 , 0 , 0 , 1 , 1 ],
+
+  ]
+
+  // Equation of the line we are solving for
+  var plane = [ 5 , -5 , 1 , 1 , .5];
+
+  var normal = [ plane[0] , plane[1] , plane[2] , plane[3] ];
+
+  var rotationMatrix , rotationMatrixT;
+
+
+  function intersect( plane , face1 , face2 , face3 ){
+
+      var matrix = [
+        plane[0] , plane[1] , plane[2] , plane[3] ,
+        face1[0] , face1[1] , face1[2] , face1[3] ,
+        face2[0] , face2[1] , face2[2] , face2[3] ,
+        face3[0] , face3[1] , face3[2] , face3[3] ,
+      ]
+
+      var transpose  = [];
+
+      mat4.transpose( transpose , matrix );
+
+      var inverse = [];
+
+      mat4.invert( inverse , transpose );
+
+      var rightHandSide = [ plane[4], face1[4] , face2[4] , face3[4] ];
+
+      var solution = [];
+
+      vec4.transformMat4( solution , rightHandSide , inverse );
+
+      //console.log( solution );
+
+      return solution;
+    
+  }
+
+  function loopThroughIntersections(){
+
+    var intersectedPoints = [];
+    var flattenedPoints = [];
+
+    for( var i = 0; i < equations.length; i ++){
+
+      for( var j = i; j < equations.length; j++ ){
+
+        for( var k = j; k < equations.length; k++ ){
+
+          // Solution of intersection of our plane
+          // with the line that is made from the 2 edges
+          var p = intersect( plane , equations[i] , equations[j] , equations[k]);
+
+          // Makes sure that we are only pushing points that are 
+          // actual points
+          if( !isNaN(p[0]) ){
+
+            if( 
+              p[0] <= 1 && p[0] >= 0 &&
+              p[1] <= 1 && p[1] >= 0 &&
+              p[2] <= 1 && p[2] >= 0 &&
+              p[3] <= 1 && p[3] >= 0 
+            ){
+              
+              intersectedPoints.push( p );
+              var flattenedPoint = [];
+              vec4.transformMat4( flattenedPoint  , p , rotationMatrixT );
+              flattenedPoints.push( flattenedPoint );
+
+            }
+
+          }
+
+        }
+
+      }
+
+    }
+
+    //console.log( flattenedPoints );
+    //return intersectedPoints;
+    return( flattenedPoints );
+
+  }
+
+
+  /*
+
+  this sec
+    
+  */
+  function drawIntersections(){
+
+    if(pSystem ){
+      scene.remove( pSystem );
+    }
+
+    //console.log( 's') ;
+    var material = new THREE.ParticleBasicMaterial({ color: 0x0000000 });
+    material.size = .05;
+
+    var geo = new THREE.Geometry();
+
+
+    // Get all the intersection points
+    intersections = loopThroughIntersections();
+
+    //console.log( intersections );
+
+    // loop through all the points, adding them to the geo of the 
+    // particle system
+    //console.log( intersections.length );
+    for( var i = 0; i < intersections.length; i++ ){
+
+      var p = intersections[i];
+
+
+
+      //console.log( p );
+      var vert = new THREE.Vector3( p[0] , p[1] , p[2] );
+      geo.vertices.push( vert );
+
+    }
+
+    pSystem = new THREE.ParticleSystem( geo , material );
+
+    scene.add( pSystem );
+
+  }
+
+
+/*Function to return a 4x4 rotation matrix which sends n (any unit \
+vector) to e4 = (0,0,0,1) by rotating along the great circle \
+determined by n and e4*/
+
+function rotationToW( n ){
+
+  var R , v , lambda , e1  , e2  , e3 , e4 , E1 , E2 , A , U , AT;
+
+  R = [
+    1 , 0 , 0 , 0 ,
+    0 , 1 , 0 , 0 ,
+    0 , 0 , 1 , 0 ,
+    0 , 0 , 0 , 1
+  ];
+
+  if( n != [ 0 , 0 , 0 , 1 ] ){
+  
+    e1 = [ 1 , 0 , 0 , 0 ];
+    e2 = [ 0 , 1 , 0 , 0 ];
+    e3 = [ 0 , 0 , 1 , 0 ];
+    e4 = [ 0 , 0 , 0 , 1 ];
+
+    lambda = Math.sqrt( n[0]*n[0] + n[1]*n[1] + n[2]*n[2] );
+    
+    /* v is a unit vector in the plane determined by n, 
+    e4 is perpendicular to e4*/
+
+    v = [];
+    var toScale = [ n[0] , n[1] , n[2] , 0 ];
+    vec4.scale( v , toScale , 1/lambda );
+
+    /*  
+      Start Gram - Schmidt to find E1 , E2 , unit vectors
+      which fit into an orthonormal frame along v , e4
+    */
+
+    // E1 = e1 - (e1.v)*v;
+    E1 = [];
+    var e1DOTv = vec4.dot( e1 , v );
+    
+    var toSub = [];
+    vec4.scale( toSub , v , e1DOTv );
+    vec4.subtract( E1 , e1 , toSub );
+
+    /*console.log( e1 );
+    console.log( toSub );
+    console.log( E1 );
+
+    console.log( E1 );*/
+    if( E1 !== [ 0 , 0 , 0 , 0 ] ){
+
+      var E1Temp = [];
+      vec4.normalize( E1Temp , E1 );
+      E1 = E1Temp;
+
+      // E2 = e2 - (e2.v)*v - (e2.E1)*E1;
+
+      var part1 = [];
+      var e2DOTv = vec4.dot( e2 , v );
+      var toSub = [];
+      vec4.scale( toSub , v , e2DOTv );
+      vec4.subtract( part1 , e2 , toSub );
+
+      var part2 = [];
+      var e2DOTE1 = vec4.dot( e2 , E1 );
+      vec4.scale( part2  ,E1 , e2DOTE1 );
+
+      E2 = [];
+      vec4.subtract( E2 , part1 , part2 );
+
+      // See if what we just did worked
+      // Otherwise switch to e3
+      if( E2 !== [ 0 , 0 , 0 , 0 ] ) { 
+
+        
+        var E2Temp = [];
+        vec4.normalize( E2Temp , E2 );
+        E2 = E2Temp;
+      
+      }else{
+        
+        //E2 = e3 - (e3.v)*v - (e3.E1)*E1;
+        
+        var part1 = [];
+        var e3DOTv = vec4.dot( e3 , v );
+        var toSub = [];
+        vec4.scale( toSub , v , e3DOTv );
+        vec4.subtract( part1 , e3 , toSub );
+
+        var part2 = [];
+        var e3DOTE1 = vec4.dot( e3 , E1 );
+        vec4.scale( part2 , E1 , e3DOTE1 );
+
+        E2 = [];
+        vec4.subtract( E2 , part1 , part2 );
+
+        var E2Temp = [];
+        vec4.normalize( E2Temp , E2 );
+        E2 = E2Temp;
+
+      }
+
+    }else{
+
+      E1 = [];
+      var e2DOTv = vec4.dot( e2 , v );
+      var toSub = [];
+      vec4.scale( toSub , v , e2DOTv );
+      vec4.subtract( E1 , e2 , toSub );
+
+      if( E1 !== [ 0 , 0 , 0 , 0 ] ){
+
+        var E1Temp = [];
+        vec4.normalize( E1Temp , E1 );
+        E1 = E1Temp;
+        
+        var part1 = [];
+        var e3DOTv = vec4.dot( e3 , v );
+        var toSub = [];
+        vec4.scale( toSub , v , e3DOTv );
+        vec4.subtract( part1 , e3 , toSub );
+
+        var part2 = [];
+        var e3DOTE1 = vec4.dot( e3 , E1 );
+        vec4.scale( part2 , E1 , e3DOTE1 );
+
+        E2 = [];
+        vec4.subtract( E2 , part1 , part2 );
+
+        var E2Temp = [];
+        vec4.normalize( E2Temp , E2 );
+        E2 = E2Temp;
+
+
+      }else{
+
+        console.log( 'And Now, Were fucked' );
+
+      }
+
+    }
+
+    // Debug
+   /* console.log( 'v ' );
+    console.log(  v   );
+    console.log( 'E1' );
+    console.log(  E1  );
+    console.log( 'E2' );
+    console.log(  E2  );*/
+
+    AT = [
+      E1[0] , E1[1] , E1[2] , E1[3] ,
+      E2[0] , E2[1] , E2[2] , E2[3] ,
+       v[0] ,  v[1] ,  v[2] ,  v[3] ,
+      e4[0] , e4[1] , e4[2] , e4[3]
+    ]
+
+    A = [];
+    mat4.invert( A , AT );
+
+    U = [
+      1 , 0 , 0 , 0 ,
+      0 , 1 , 0 , 0 ,
+      0 , 0 , n[4] , -Math.sqrt( 1 - ( n[4] * n[4] ) ),
+      0 , 0 , Math.sqrt( 1 - ( n[4] * n[4] ) ) , n[4]
+      ];
+
+    R = [];
+    var part1 = [];
+    mat4.multiply( part1 , A , U );
+    mat4.multiply( R , part1 , AT );
+
+    return R
+
+  }else{
+
+    return R
+
+  }
+  
+}
+
+
+function flatten( point ){
+
+
+}
+
+
+/*     AT = {E1, E2, v, e4};
+     A = Inverse[AT];
+     U = {{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 
+        n[[4]], -Sqrt[1 - n[[4]]^2]}, {0, 0, Sqrt[1 - n[[4]]^2], 
+        n[[4]]}};
+     R = A.U.AT;
+     ];
+    Print["R= ", MatrixForm[R]];
+    N[R]
+
+
+
+
+
+  }}
+RotateToW := Function[{n},
+   Module[{R, v, \[Lambda], e1, e2, e3, e4, E1, E2, A, U, AT},
+    R = {{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 1}};
+    (*Check for v \[NotEqual] n*)
+    If[n != {0, 0, 0, 1},
+     e1 = {1, 0, 0, 0};
+     e2 = {0, 1, 0, 0};
+     e3 = {0, 0, 1, 0};
+     e4 = {0, 0, 0, 1};
+     
+     \[Lambda] = Sqrt[n[[1]]^2 + n[[2]]^2 + n[[3]]^2];
+     (*v is a unit vector in the plane determined by n,
+     e4 which is perpendicular to e4*)
+     v = {n[[1]], n[[2]], n[[3]], 0}*1/\[Lambda];
+     (*Start Gram-Schmidt to find E1,E2, 
+     unit vectors which fit into an orthonormal frame along with v,
+     e4.*) 
+     E1 = e1 - (e1.v)*v;
+     If[E1 != {0, 0, 0, 0},
+      E1 = E1/Sqrt[E1.E1];
+      E2 = e2 - (e2.v)*v - (e2.E1)*E1;
+      If[E2 != {0, 0, 0, 0},
+       E2 = E2/Sqrt[E2.E2],
+       E2 = e3 - (e3.v)*v - (e3.E1)*E1;
+       E2 = E2/Sqrt[E2.E2];
+       ],
+      E1 = e2 - (e2.v)*v;
+      If[E1 != {0, 0, 0, 0},
+       E1 = E1/Sqrt[E1.E1];
+       E2 = e3 - (e3.v)*v - (e3.E1)*E1;
+       E2 = E2/Sqrt[E2.E2];
+       ];
+      ];
+     Print["v= ", v, "E1= ", E1, "E2= ", E2];
+     AT = {E1, E2, v, e4};
+     A = Inverse[AT];
+     U = {{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 
+        n[[4]], -Sqrt[1 - n[[4]]^2]}, {0, 0, Sqrt[1 - n[[4]]^2], 
+        n[[4]]}};
+     R = A.U.AT;
+     ];
+    Print["R= ", MatrixForm[R]];
+    N[R]
+    ]
+    ];
+*/
+
+  /*function mapToPlane( point ){
+
+    var zAxis   = [   0      ,    0     ,     0   ,      1     ];
+
+    // We need to normalize this 
+    var plane  = [ plane[0] , plane[1] , plane[2] , plane[3]  ];
+
+    var normal = [];
+    vec4.normalize( normal , plane );
+
+
+    var vector1 = [];
+    vec4.cross( vector1 , zAxis , normal );
+
+    var vector1Normalized = [];
+    vec4.normalize( vector1Normalized , vector1 );
+
+    var vector2 = [];
+    vec4.cross( vector2 , vector1Normalized , normal );
+
+    var vector2Normalized = [];
+    vec4.normalize( vector2Normalized , vector2 );
+
+
+    var A = [
+      
+      vector1Normalized[0]  , vector1Normalized[1]  , vector1Normalized[2] ,
+      vector2[0]            , vector2[1]            , vector2[2] ,
+      normal[0]             , normal[1]             , normal[2]
+
+    ];
+
+
+    var a = [
+
+    vector1Normalized[0] , vector2[0] , normal[0],
+    vector1Normalized[1] , vector2[1] , normal[1],
+    vector1Normalized[2] , vector2[2] , normal[2],
+    vector1Normalized[3] , vector
+
+    ]
+    
+    var newPoint = [];
+
+    vec4.transformMat4( newPoint , point , a );
+
+    //console.log( newPoint );
+
+    return newPoint;
+
+  }
+
+  function flattenPoints(){
+
+    var flatPoints = [];
+
+    for( var i = 0 ; i < intersections.length; i ++ ){
+  
+      var point = mapToPlane( intersections[i] );
+      flatPoints.push( point );
+
+    }
+
+    var points = centerPoints( flatPoints );
+
+    //console.log( points );
+
+    return flatPoints;
+
+  }
+
+  function centerPoints( points ){
+
+    var total = [ 0 , 0 , 0 ];
+
+    for( var i = 0; i < points.length; i ++ ){
+
+      var p = points[i];
+      
+      total[0] += p[0];
+      total[1] += p[1];
+      total[2] += p[2];      
+
+    }
+
+    var ave = [
+      total[0] / points.length,
+      total[1] / points.length,
+      total[2] / points.length,
+    ] 
+
+    var centeredPoints = [];
+    //centeredPoints.push( ave );
+  
+   //console.log( 'ss'); 
+    for( var i = 0; i < points.length; i++ ){
+  
+      var nP = [
+        points[i][0] - ave[0],
+        points[i][1] - ave[1],
+        points[i][2] - ave[2],
+      ];
+
+      centeredPoints.push( nP );
+
+    }
+
+    centeredPoints.push( [0 , 0 , 0] );
+    //console.log( centeredPoints.length );
+
+    return centeredPoints
+
+  }*/
+
+ 
+  //drawIntersections();
+
+
+  function drawPoints(){
+  
+    c.lineWidth = 3;
+    c.strokeStyle = '#000000';
+
+    c.fillStyle = 'red';
+    c.fillRect( 0 , 0 , c.width , c.height );
+
+    c.fillStyle = 'white';
+
+    var points = flattenPoints();
+
+    //console.log( points.length );
+    // Defines the font shape and size
+    c.font = "10px Arial";
+
+    // Tells Canvas how to align text
+    c.textAlign = 'center';
+    c.textBaseline = 'middle';
+
+
+    for( var i = 0;  i < points.length; i ++){
+
+      var p = convertToCanvas( points[i] )
+      /*c.beginPath();
+      c.arc( p[0] , p[1] , 4 , 0 , 2 * Math.PI );
+      c.fill();*/
+      
+      // Tells Canvas to draw the The number of fingers,
+      // at the center of the canvas
+      c.fillText( i , p[0] , p[1] );
+
+    }
+
+
+  }
+
+  function convertToCanvas( point ){
+
+
+    point[0]  *= c.width  / 4;
+    point[1]  *= c.height / 4;
+   // console.log( canvas.clientHeight);
+   // console.log( canvas.clientWidth);
+
+    var x = c.width  / 2 + point[0];
+    var y = c.height / 2 - point[1];
+    
+
+    return [ x , y ]
+ 
+
+  }
+
+  var frame
+
+  var controller = new Leap.Controller();
+
+  controller.on( 'frame' , function(data){
+
+    frame = data;
+
+    if( frame.hands[0] ){
+
+      var dir = frame.hands[0].palmNormal;
+
+      var yPos = frame.hands[0].palmPosition[1];
+      var xPos = frame.hands[0].palmPosition[1];
+      var offset  = -( yPos - frame.interactionBox.center[1]) / 100;
+      var offsetX =  ( xPos - frame.interactionBox.center[0]) / 100;
+
+      plane = [ dir[0] , dir[1] , dir[2] , dir[0] , offset ]; //offsetX , offset ];
+      rotationMatrix = rotationToW( plane );
+      rotationMatrixT = [];
+      mat4.invert( rotationMatrixT , rotationMatrix );
+
+      drawIntersections();
+      //drawPoints();
+
+    }
+
+
+   
+
+
+  });
+
+  controller.connect();
+
+</script>
+
+</body>
+
+

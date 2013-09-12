@@ -16,7 +16,34 @@
 
   */
 
-  var frame;
+  /*
+      LEAP GLOBAL VARS
+  */
+  var frame, controller;
+
+
+  /*
+      THREE.JS GLOBAL VARS
+  */
+
+  var container , scene , camera , controls , renderer ; 
+
+  var pSystem , pMaterial;
+
+  /*
+      CANVAS GLOBAL VARS
+  */
+  var canvas , c;
+
+  
+  /*
+      MATH GLOBAL VARS
+  */  
+
+  var equations     = [];
+  var plane         = [];
+  var intersections = [];
+
 
   // The system that we are using to map the intersections
 
@@ -26,56 +53,65 @@
   // The particle system we are using to map the intersections
   var pSystem;
 
-  // The container for our 3D renderer
-  var container = document.getElementById( 'container' );
+  init();
 
-  // The canvas used to show the 2D slices
-  var canvas = document.getElementById( '2d' );
-  var c = canvas.getContext( '2d' );
+  function initCanvas(){
 
-  canvas.height = canvas.clientHeight;
-  canvas.width  = canvas.clientWidth;
-  c.width = canvas.width;
-  c.height = canvas.height;
+    // The canvas used to show the 2D slices
+    canvas = document.getElementById( '2d' );
+    c = canvas.getContext( '2d' );
 
+    // Making sure the canvas isn't scewed
+    // and assigning w and h to c for easier access
+    canvas.height = canvas.clientHeight;
+    canvas.width  = canvas.clientWidth;
+    c.width = canvas.width;
+    c.height = canvas.height;
+
+  }
+  
 
   /* 
   
-  THREE.js Setup
+    THREE.js Setup
   
   */
+  function initThree(){
   
-  var scene = new THREE.Scene();
-  var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 10 );
+    // The container for our 3D renderer
+    container = document.getElementById( 'container' );
 
-  camera.position.z = 3;
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera( 
+      75, 
+      window.innerWidth / window.innerHeight, 
+      0.1, 
+      10 
+    );
 
-  var controls = new THREE.OrbitControls( camera );
+    camera.position.z = 3;
 
-  var renderer = new THREE.WebGLRenderer();
-  renderer.setSize( window.innerWidth, window.innerHeight );
-  
-  container.appendChild( renderer.domElement );
+    controls = new THREE.OrbitControls( camera );
 
-  var geo = new THREE.CubeGeometry( 1 , 1 , 1 );
+    var geo = new THREE.CubeGeometry( 1 , 1 , 1 );
+    var material = new THREE.MeshNormalMaterial({ wireframe: true });
+    var mesh = new THREE.Mesh( geo , material );
 
-  var material = new THREE.MeshNormalMaterial({ wireframe: true });
+    // Making it so that the cube is form 0 -> 1 
+    // rather than -.5 to .5
+    mesh.position.x = .5;
+    mesh.position.y = .5;
+    mesh.position.z = .5;
 
-  var mesh = new THREE.Mesh( geo , material );
+    scene.add( mesh );
 
-  mesh.position.x = .5;
-  mesh.position.y = .5;
-  mesh.position.z = .5;
+    renderer = new THREE.WebGLRenderer();
+    renderer.setSize( window.innerWidth, window.innerHeight );
 
-  scene.add( mesh );
+    container.appendChild( renderer.domElement );
 
 
-  var planeMesh = new THREE.Mesh(
-    new THREE.PlaneGeometry( 2 , 2 ),
-    new THREE.MeshNormalMaterial({ side:THREE.DoubleSide, transparent: true , opacity:.4})
-  );
-
-  scene.add( planeMesh );
+  }
   
   function render() {
   
@@ -84,69 +120,109 @@
 	renderer.render(scene, camera);
  
   }
+
+  function initMath(){
+
+    equations = [
+
+      // X = 0 
+      [ 1 , 0 , 0 , 0 ],
+
+      // X = 1
+      [ 1 , 0 , 0 , 1 ],
+
+      // Y = 0
+      [ 0 , 1 , 0 , 0 ],
+
+      // Y = 1
+      [ 0 , 1 , 0 , 1 ],
+
+      // Z = 0
+      [ 0 , 0 , 1 , 0 ],
+
+      // Z = 1
+      [ 0 , 0 , 1 , 1 ],
+
+    ];
+
+    // Equation of the line we are solving for
+    plane = [ 1 , 1 , 0 , .5];
+
+    normal = [ plane[0] , plane[1] , plane[2] ];
+
+  }
+
+
+  function initLeap(){
+
+    controller = new Leap.Controller();
+
+    controller.on( 'frame' , function(data){
+
+      frame = data;
+
+      if( frame.hands[0] ){
+
+        var dir = frame.hands[0].palmNormal;
+
+        var yPos = frame.hands[0].palmPosition[1];
+        var offset = -( yPos -frame.interactionBox.center[1]) / 100;
+
+        plane = [ dir[0] , dir[1] , dir[2] , offset ];
+
+        drawIntersections();
+        drawPoints();
+
+      }
+    
+    });
+
+    controller.connect();
+
+  }
+
+
+  function render() {
   
-  render();
+    requestAnimationFrame(render);
+    controls.update();
+	renderer.render(scene, camera);
+ 
+  }
 
-
-
-  var equations = [
-
-    // X = 0 
-    [ 1 , 0 , 0 , 0 ],
-
-    // X = 1
-    [ 1 , 0 , 0 , 1 ],
-
-    // Y = 0
-    [ 0 , 1 , 0 , 0 ],
-
-    // Y = 1
-    [ 0 , 1 , 0 , 1 ],
-
-    // Z = 0
-    [ 0 , 0 , 1 , 0 ],
-
-    // Z = 1
-    [ 0 , 0 , 1 , 1 ],
-
-
-
-
-  ]
-
-  // Equation of the line we are solving for
-  var plane = [ 1 , 1 , 0 , .5];
-
-  var normal = [ plane[0] , plane[1] , plane[2] ];
-
-
-
+  function init(){
+  
+    initMath();
+    initThree();
+    initCanvas();
+    initLeap();
+    render();
+  
+  }
 
   function intersect( plane , face1 , face2 ){
 
-      var matrix = [
-        plane[0] , plane[1] , plane[2],
-        face1[0] , face1[1] , face1[2],
-        face2[0] , face2[1] , face2[2]
-      ]
+    var matrix = [
+      plane[0] , plane[1] , plane[2],
+      face1[0] , face1[1] , face1[2],
+      face2[0] , face2[1] , face2[2]
+    ]
 
-      var transpose  = [];
+    var transpose  = [];
 
-      mat3.transpose( transpose , matrix );
+    mat3.transpose( transpose , matrix );
 
-      var inverse = [];
+    var inverse = [];
 
-      mat3.invert( inverse , transpose );
+    mat3.invert( inverse , transpose );
 
-      var rightHandSide = [ plane[3], face1[3] , face2[3] ];
+    var rightHandSide = [ plane[3], face1[3] , face2[3] ];
 
-      var solution = [];
+    var solution = [];
 
-      vec3.transformMat3( solution , rightHandSide , inverse );
+    vec3.transformMat3( solution , rightHandSide , inverse );
 
-      //console.log( solution );
-
-      return solution;
+    return solution;
     
   }
 
@@ -157,22 +233,6 @@
     for( var i = 0; i < equations.length; i ++){
 
       for( var j = i; j < equations.length; j++ ){
-
-        /* 
-          This section makes sure that we don't 
-          compare planes that don't have intersections
-        */
-        if( i % 2 == 0 && j == i+1 ){
-          //console.log( i + " " + j );
-          continue;
-        }else if(  i % 2 == 1 && j == i-1 ){
-          //console.log( i + " " + j );
-          continue;
-        }else if( i == j ){
-          //console.log( i + " " + j );
-          continue;
-        }
-
         
         // Solution of intersection of our plane
         // with the line that is made from the 2 edges
@@ -183,9 +243,11 @@
           p[1] <= 1 && p[1] >= 0 &&
           p[2] <= 1 && p[2] >= 0
         ){
+          // Passing in the faces that got intersected
+          p[3] = i;
+          p[4] = j;
           intersectedPoints.push( p );
         }
-
 
       }
 
@@ -196,14 +258,9 @@
   }
 
 
-  /*
-
-  this sec
-    
-  */
   function drawIntersections(){
 
-    if(pSystem ){
+    if( pSystem ){
       scene.remove( pSystem );
     }
 
@@ -212,7 +269,6 @@
     material.size = .1;
 
     var geo = new THREE.Geometry();
-
 
     // Get all the intersection points
     intersections = loopThroughIntersections();
@@ -226,6 +282,7 @@
 
       //console.log( p );
       var vert = new THREE.Vector3( p[0] , p[1] , p[2] );
+      vert.faces = [ p[3] , p[4] ];
       geo.vertices.push( vert );
 
     }
@@ -256,21 +313,16 @@
 
 
     var A = [
-      
       vector1Normalized[0]  , vector1Normalized[1]  , vector1Normalized[2] ,
       vector2[0]            , vector2[1]            , vector2[2] ,
       normal[0]             , normal[1]             , normal[2]
-
     ];
 
 
     var a = [
-
-    vector1Normalized[0] , vector2[0] , normal[0],
-    vector1Normalized[1] , vector2[1] , normal[1],
-    vector1Normalized[2] , vector2[2] , normal[2],
-
-
+      vector1Normalized[0] , vector2[0] , normal[0],
+      vector1Normalized[1] , vector2[1] , normal[1],
+      vector1Normalized[2] , vector2[2] , normal[2],
     ]
     
     var newPoint = [];
@@ -290,59 +342,17 @@
     for( var i = 0 ; i < intersections.length; i ++ ){
   
       var point = mapToPlane( intersections[i] );
+      
+      point[3] = intersections[i][3];
+      point[4] = intersections[i][4];
+     
       flatPoints.push( point );
-
+      
     }
-
-    var points = centerPoints( flatPoints );
-
-    //console.log( points );
 
     return flatPoints;
 
   }
-
-  function centerPoints( points ){
-
-    var total = [ 0 , 0 , 0 ];
-
-    for( var i = 0; i < points.length; i ++ ){
-
-      var p = points[i];
-      
-      total[0] += p[0];
-      total[1] += p[1];
-      total[2] += p[2];      
-
-    }
-
-    var ave = [
-      total[0] / points.length,
-      total[1] / points.length,
-      total[2] / points.length,
-    ] 
-
-    var centeredPoints = [];
-    
-    for( var i = 0; i < points.length; i++ ){
-  
-      var nP = [
-        points[i][0] - ave[0],
-        points[i][1] - ave[1],
-        points[i][2] - ave[2],
-      ];
-
-      centeredPoints.push( nP );
-
-    }
-
-    return centeredPoints
-
-  }
-
- 
-  //drawIntersections();
-
 
   function drawPoints(){
   
@@ -356,191 +366,70 @@
 
     var points = flattenPoints();
 
+    //console.log( points.length );
     // Defines the font shape and size
     c.font = "10px Arial";
 
     // Tells Canvas how to align text
-    c.textAlign = 'center';
-    c.textBaseline = 'middle';
+    c.textAlign     = 'center';
+    c.textBaseline  = 'middle';
 
 
-    for( var i = 0;  i < points.length; i ++){
+    for( var i = 0; i < points.length; i++ ){
+      for( var j = i+1; j < points.length; j++ ){
 
-      var p = convertToCanvas( points[i] )
-      /*c.beginPath();
-      c.arc( p[0] , p[1] , 4 , 0 , 2 * Math.PI );
-      c.fill();*/
-      
-      // Tells Canvas to draw the The number of fingers,
-      // at the center of the canvas
-      c.fillText( i , p[0] , p[1] );
+        var p1 = points[i];
+        var p2 = points[j];
+
+        if( 
+          p1[3] == p2[3] || 
+          p1[3] == p2[4] ||
+          p1[4] == p2[3] ||
+          p1[4] == p2[4] 
+        ){
+
+          var start = convertToCanvas( p1 );
+          var end   = convertToCanvas( p2 );
+
+          c.beginPath();
+          c.moveTo( start[0] , start[1] );
+          c.lineTo( end[0]   , end[1]   );
+          c.stroke();
+
+        }
+
+      }
 
     }
 
+    for( var i = 0;  i < points.length; i++ ){
+
+      var point = convertToCanvas( points[i] )
+      
+      // Tells Canvas to draw the The number of fingers,
+      // at the center of the canvas
+      c.fillText( i , point[0] , point[1] );
+
+    }
 
   }
 
   function convertToCanvas( point ){
 
-
-    point[0]  *= c.width  / 4;
-    point[1]  *= c.height / 4;
-   // console.log( canvas.clientHeight);
-   // console.log( canvas.clientWidth);
-
-    var x = c.width  / 2 + point[0];
-    var y = c.height / 2 - point[1];
+    var p =[
+      point[0] * c.width / 4,
+      point[1] * c.width / 4
+    ]
     
-
-    return [ x , y ]
- 
-
+    return [
+      c.width  / 2 + p[0],
+      c.height / 2 + p[1]
+    ]
+  
   }
-
-  var frame
-
-  var controller = new Leap.Controller();
-
-  controller.on( 'frame' , function(data){
-
-    frame = data;
-
-    if( frame.hands[0] ){
-
-      var dir = frame.hands[0].palmNormal;
-
-      var yPos = frame.hands[0].palmPosition[1];
-      var offset = -( yPos -frame.interactionBox.center[1]) / 100;
-
-      plane = [ dir[0] , dir[1] , dir[2] , offset ];
-
-      drawIntersections();
-      //flattenPoints();
-      drawPoints();
-
-    }
-
-
-   
-
-
-  });
-
-  controller.connect();
 
 </script>
 
 </body>
 
 
-/*
-
-function rotateToZ( input ){
-
-
-    var solution = [];
-
-    // Vector that is perp to both z and N
-    var R = [];
-
-    // Normal of Plane
-    var N = [ input[0] , input[1], input[2] ];
-
-    // Normalized N
-    var n = [];
-    vec3.normalize( n , N );
-
-    // Z axis
-    var zAxis = [0 , 0 , 1];
-
-    vec3.cross( R , zAxis, n );
-
-    if( R != [ 0 , 0 , 0 ] ){
-
-      // Normalized r
-      var r = [];
-      vec3.normalize( r , R );
-
-      // z component of n
-      var a = n[2];
-
-      var b = Math.sqrt( 1 - ( a * a ) );
-
-      // The cross of r and 0 0 1
-      var cross = [];
-
-      vec3.cross( cross, r , [ 0 , 0 , 1] );
-
-      var crossNormal =[];
-
-      vec3.normalize( crossNormal , cross );
-
-      // Setting up a matrix to transpose
-      var A = [
-        0 , crossNormal[0] , r[0],
-        0 , crossNormal[1] , r[1],
-        1 , crossNormal[2] , r[2]
-      ]
-      
-      var u = [
-         a , b , 0 ,
-        -b , a , 0 ,
-         0 , 0 , 1
-      ]
-
-      var AInverse = [];
-
-      mat3.invert( AInverse , A );
-
-      var step1 = [];
-
-      mat3.multiply( step1 , A , u );
-
-      mat3.multiply( solution , step1 , AInverse );
-
-
-    }else{
-      solution = mat3.create();
-    }
-
-    console.log(solution);
-
-    var s = solution;
-
-    var matrix = new THREE.Matrix3();
-
-
-    matrix.set(
-      s[0] , s[1] , s[2],
-      s[3] , s[4] , s[5],
-      s[6] , s[7] , s[8]
-    )
-
-    console.log('ROT MATRIX');
-    console.log( planeMesh.matrix );
-
-    var output = [];
-
-    var transpose =[];
-    mat3.transpose( transpose , solution );
-
-    vec3.transformMat3( output , n , solution );
-    console.log('ZZZZ');
-    console.log(output);
-
-
-    console.log( matrix );
-    planeMesh.rotation.setFromRotationMatrix( matrix );
-
-    planeMesh.rotation.x = Math.PI;
-    if( planeMesh.rotation.x == NaN ){
-      console.log( 'CRAP' );
-    }
-
-    console.log(planeMesh.rotation);
-
-
-    return solution;
-
-  }
-*/
