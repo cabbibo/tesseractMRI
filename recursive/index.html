@@ -1,30 +1,33 @@
 
 <body style="background:#000">
+  
   <script src = "/three.js/build/three.js" >                            </script>
   <script src = "/three.js/src/extras/geometries/ConvexGeometry.js" >   </script>
+  
   <script src = "/allSiteLib/OrbitControls.js" >                        </script>
   <script src = "/allSiteLib/leap.js" >                                 </script>
   <script src = "/allSiteLib/stats.min.js" >                            </script>
   <script src = "/allSiteLib/underscore.js" >                           </script>
   <script src = "/allSiteLib/js/AUDIO.js" >                             </script>
-  <script src = "gl-matrix-min.js" >                                    </script>
-
+  
+  <script src = "../lib/gl-matrix-min.js" >                             </script>
+  <script src = "../lib/4d.js">                                         </script>
+  <script src = "../lib/loop.js">                                       </script>
+  <script src = "../lib/audio.js">                                      </script>
+  
   <script src = "geos.js">                                              </script>
-  <script src = "4d.js">                                                </script>
-  <script src = "loop.js">                                              </script>
   <script src = "scene2.js">                                            </script>
-  <script src = "audio.js">                                             </script>
+  
   <div id="container" style="position:absolute;top:0;left:0"></div>
 
 
   <script>
 
-    initScene();
     initMath();
     initLeap();
     initAudio();
+    initScene();
     initGeos( 12 );
-    //render();
 
   </script>
 
