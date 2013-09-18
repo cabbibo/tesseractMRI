@@ -1,8 +1,8 @@
 
 <body style="background:#000">
   
-  <script src = "/allSiteLib/three.min.js" >                            </script>
-  <script src = "/allSiteLib/ConvexGeometry.js" >                       </script>
+  <script src = "/three.js/build/three.js" >                            </script>
+  <script src = "/three.js/src/extras/geometries/ConvexGeometry.js" >   </script>
   
   <script src = "/allSiteLib/OrbitControls.js" >                        </script>
   <script src = "/allSiteLib/leap.js" >                                 </script>
@@ -13,15 +13,11 @@
 
   
   <script src = "../lib/gl-matrix-min.js" >                             </script>
-  <script src = "../lib/2d.js">                                         </script>
-  <script src = "../lib/3d.js">                                         </script>
   <script src = "../lib/4d.js">                                         </script>
   <script src = "../lib/loop.js">                                       </script>
   <script src = "../lib/audio.js">                                      </script>
   <script src = "../lib/scene.js">                                      </script>
   
-  <script src = "../lib/App.js">                                        </script>
-
   <script src = "perlin.js">                                            </script>
   <script src = "ParticleEmitter.js">                                   </script>
   
@@ -30,41 +26,38 @@
 
   <script>
 
-    masterGain.gain.value = 0;
+    init();
+    //update();
 
-    var app  = new App();
+    var noise = ClassicalNoise();
+    console.log( noise );
+    
+    function init(){
 
-    app.update = function(){
-
-      drawIntersections();
-      checkForHitCorners();
-      updateEmitters();
-
-      //tesseractScene.rotation.y += .01;
-      //particleScene.rotation.y += .01;
-
+      initMath();
+      initLeap();
+      initAudio();
+      initScene();
+      initEmitters();
 
     }
 
-    app.cornerHit = function(i){
 
-      var p = getCornerPosition( hitCorners[i][0] );
+    function update(){
 
-      cornerEmitter.position = convertToThree( p[0] );
-      cornerEmitter.scene.position = cornerEmitter.position;
-
-      if( hitCorners[i][1] == "life" ){
-        cornerEmitter.birth();
-      }else if( hitCorners[i][1] == "death" ){
-        cornerEmitter.death();
-      }else if( hitCorners[i][1] == "sleep" ){
-        cornerEmitter.sleep();
-      }else{
-        console.log('WTF');
-      }
+      requestAnimationFrame(update);
 
 
-      cornerEmitter.position.x = 100000;
+      updateAudio();
+
+      drawIntersections();
+      checkForHitCorners();
+
+      updateEmitters();
+
+      controls.update();
+      stats.update();
+      renderer.render(scene, camera);
 
     }
 

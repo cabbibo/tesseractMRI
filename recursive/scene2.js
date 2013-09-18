@@ -97,9 +97,9 @@ function initScene(){
 
 }
 
-function render() {
+function animate() {
 
-  requestAnimationFrame(render);
+  requestAnimationFrame( animate );
   
   controls.update();
   stats.update();

@@ -1,20 +1,14 @@
 
 var particleEmitters = [];
-
-var cornerEmitter;
 var particleScene;
 
 var emitterClock = 0;
 
-
-
 var particleMaterials = [
 
   new THREE.MeshLambertMaterial({ color:0xaaaaaa }),
-  new THREE.MeshLambertMaterial({ color:0x6633aa }),  //Life
-  new THREE.MeshLambertMaterial({ color:0xaa3344 }),  //Death
-  new THREE.MeshLambertMaterial({ color:0x009E8E }),  //Sleep
-
+  new THREE.MeshLambertMaterial({ color:0x6633aa }),
+  new THREE.MeshLambertMaterial({ color:0x6633aa }),
 
 ]
 
@@ -79,7 +73,7 @@ ParticleEmitter.prototype = {
 
     for( var i = 0 ; i < 20; i++ ){
 
-      var particles = new Particle( this ,  true , particleMaterials[1] );  
+      var particles = new Particle( this , true , true );  
 
     }
 
@@ -89,22 +83,11 @@ ParticleEmitter.prototype = {
 
     for( var i = 0 ; i < 20; i++ ){
 
-      var particles = new Particle( this , true , particleMaterials[2] );  
-
-    }
-
-  },
-
-  sleep:function(){
-
-    for( var i = 0 ; i < 20; i++ ){
-
-      var particles = new Particle( this , true , particleMaterials[3] );  
+      var particles = new Particle( this , true , false );  
 
     }
 
   }
-
 
 
 }
@@ -237,7 +220,7 @@ Particle.prototype = {
 
 }
 
-function Particle( e , explode , mat  ){
+function Particle( e , explode , life ){
 
   // using e for emitter, just for shorter code
   // I know its non descriptive, but pretty is 
@@ -270,8 +253,11 @@ function Particle( e , explode , mat  ){
 
   var material = e.material;
 
-  if( mat ){
-    material = mat;
+  if( explode && life ){
+    material = e.lifeMaterial;
+  }else if( explode && !life ){
+    material = e.deathMaterial;
+
   }
 
   this.mesh = new THREE.Mesh( e.geometry , material );
@@ -306,8 +292,6 @@ function initEmitters(){
 
   }
 
-  cornerEmitter = new ParticleEmitter();
-
 }
 
 
@@ -333,18 +317,18 @@ function updateEmitters(){
 
       emitter.velocity.subVectors( emitter.position , emitter.oPosition );
 
-      if( emitterClock % 800000 == 0 )
+      if( emitterClock % 2 == 0 )
         emitter.emitParticles( 1 );
       
     // Juste gained this particleEmitter
     }else if( intersections[i] ){
 
-      //emitter.birth();
+      emitter.birth();
 
     // Just lost this particleEmitter
     }else if( oIntersections[i] ){
 
-      //emitter.death();
+      emitter.death();
       emitter.position.x = 10000;
 
     }else{
