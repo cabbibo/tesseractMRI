@@ -119,86 +119,45 @@ ParticleEmitter.prototype = {
  */
 function ParticleEmitter( params ){
 
-  if( !params )
-    var params = {};
+  this.params = _.defaults( params || {}, {
 
-  // The lifetime of the partilces
-  if( params.geometry ){
-    this.geometry = params.geometry;
-  }else{
-    this.geometry = new THREE.CubeGeometry( .1 , .1 , .1 );
-  }
+    geometry:       new THREE.CubeGeometry( .1 , .1 , .1 ),
+    material:       particleMaterials[0],
+    lifeMaterial:   particleMaterials[1],
+    deathMaterial:  particleMaterials[2],
+    velocityU:      .1,
+    age:            1,
+    ageU:           .1,
+    decayRate:      .01,
+    decayRateU:     .1,
+    viscosity:      .99,
+    viscosityU:     .01
 
-  if( params.material ){
-    this.material = params.material;
-  }else{
-    this.material       = particleMaterials[0];
-    this.lifeMaterial   = particleMaterials[1];
-    this.deathMaterial  = particleMaterials[2];
+  });
   
-  }
-
-  // Uncertainty of velocity
-  if( params.velocityU ){
-    this.velocityU = params.velocityU;
-  }else{
-    this.velocityU = .1;
-  }
+  this.geometry       = this.params.geometry;
+  this.material       = this.params.material;
+  this.lifeMaterial   = this.params.lifeMaterial;
+  this.deathMaterial  = this.params.deathMaterial;
+  this.velocityU      = this.params.velocityU;
+  this.age            = this.params.age;
+  this.ageU           = this.params.ageU;
+  this.decayRate      = this.params.decayRate;
+  this.decayRateU     = this.params.decayRateU;
+  this.viscosity      = this.params.viscosity;
+  this.viscosityU     = this.params.viscosityU;
   
-  // The lifetime of the partilces
-  if( params.age ){
-    this.age = params.age;
-  }else{
-    this.age = 1;
-  }
-
-  // Uncertainty of the lifetime
-  if( params.ageU ){
-    this.ageU = params.ageU;
-  }else{
-    this.ageU = .1;
-  }
-
-  // The decay Rate of the particles
-  if( params.decayRate ){
-    this.decayRate = params.decayRate;
-  }else{
-    this.decayRate = .01;
-  }
-
-  // Uncertainty of the decayRate
-  if( params.decayU ){
-    this.decayU = params.decayU;
-  }else{
-    this.decayU = .1;
-  }
-
-  // How much the particles will slow down
-  if( params.viscosity ){
-    this.viscosity = params.viscosity;
-  }else{
-    this.viscosity = .99;
-  }
-
-  // How much the particles will slow down
-  if( params.viscosityU ){
-    this.viscosityU = params.viscosityU;
-  }else{
-    this.viscosityU = .01;
-  }
-
-
-
-  this.particles    = [];
-
-  this.velocity     = new THREE.Vector3();
-
-  this.position     = new THREE.Vector3();
-  this.oPosition    = new THREE.Vector3();
-
-  this.scene        = new THREE.Object3D();
   
-  this.mesh         = new THREE.Mesh( this.geometry , this.material );
+  this.particles      = [];
+
+  this.velocity       = new THREE.Vector3();
+
+  this.position       = new THREE.Vector3();
+  this.oPosition      = new THREE.Vector3();
+
+  this.scene          = new THREE.Object3D();
+  
+  this.mesh           = new THREE.Mesh( this.geometry , this.material );
  
   this.scene.add( this.mesh );
 
@@ -277,7 +236,7 @@ function Particle( e , explode , mat  ){
   this.mesh = new THREE.Mesh( e.geometry , material );
 
   this.age        = (1 + M.randomRange( e.ageU ) ) * e.age;
-  this.decayRate  = (1 + M.randomRange( e.decayU )) * e.decayRate;
+  this.decayRate  = (1 + M.randomRange( e.decayRateU )) * e.decayRate;
   this.viscosity  = (1 + M.randomRange( e.viscosityU )) * e.viscosity;
 
   e.particles.push( this );
