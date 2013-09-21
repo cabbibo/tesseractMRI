@@ -64,22 +64,11 @@ ParticleEmitter.prototype = {
   },
 
 
-  explodeParticles:function( numOf ){
-
-    for( var i = 0 ; i < numOf; i++ ){
-
-      var particles = new Particle( this , true );  
-
-    }
-
-  },
-
-
   birth:function(){
 
     for( var i = 0 ; i < 20; i++ ){
 
-      var particles = new Particle( this ,  true , particleMaterials[1] );  
+      var particles = new Particle( this , particleMaterials[1] );  
 
     }
 
@@ -89,7 +78,7 @@ ParticleEmitter.prototype = {
 
     for( var i = 0 ; i < 20; i++ ){
 
-      var particles = new Particle( this , true , particleMaterials[2] );  
+      var particles = new Particle( this , particleMaterials[2] );  
 
     }
 
@@ -99,7 +88,7 @@ ParticleEmitter.prototype = {
 
     for( var i = 0 ; i < 20; i++ ){
 
-      var particles = new Particle( this , true , particleMaterials[3] );  
+      var particles = new Particle( this , particleMaterials[3] );  
 
     }
 
@@ -119,75 +108,23 @@ ParticleEmitter.prototype = {
  */
 function ParticleEmitter( params ){
 
-  if( !params )
-    var params = {};
 
-  // The lifetime of the partilces
-  if( params.geometry ){
-    this.geometry = params.geometry;
-  }else{
-    this.geometry = new THREE.CubeGeometry( .1 , .1 , .1 );
-  }
+  this.params = _.defaults( params || {}, {
 
-  if( params.material ){
-    this.material = params.material;
-  }else{
-    this.material       = particleMaterials[0];
-    this.lifeMaterial   = particleMaterials[1];
-    this.deathMaterial  = particleMaterials[2];
+    material:       particleMaterials[0],
+    lifeMaterial:   particleMaterials[1],
+    deathMaterial:  particleMaterials[2],
+    geometry:       new THREE.CubeGeometry( .1 , .1 , .1 ),
+    velocityU:       .1,
+    age:              1,
+    ageU:            .1,
+    decayRate:      .01,
+    decayRateU:      .1,
+    viscosity:      .99,
+    viscosityU:     .01
+
   
-  }
-
-  // Uncertainty of velocity
-  if( params.velocityU ){
-    this.velocityU = params.velocityU;
-  }else{
-    this.velocityU = .1;
-  }
-  
-  // The lifetime of the partilces
-  if( params.age ){
-    this.age = params.age;
-  }else{
-    this.age = 1;
-  }
-
-  // Uncertainty of the lifetime
-  if( params.ageU ){
-    this.ageU = params.ageU;
-  }else{
-    this.ageU = .1;
-  }
-
-  // The decay Rate of the particles
-  if( params.decayRate ){
-    this.decayRate = params.decayRate;
-  }else{
-    this.decayRate = .01;
-  }
-
-  // Uncertainty of the decayRate
-  if( params.decayU ){
-    this.decayU = params.decayU;
-  }else{
-    this.decayU = .1;
-  }
-
-  // How much the particles will slow down
-  if( params.viscosity ){
-    this.viscosity = params.viscosity;
-  }else{
-    this.viscosity = .99;
-  }
-
-  // How much the particles will slow down
-  if( params.viscosityU ){
-    this.viscosityU = params.viscosityU;
-  }else{
-    this.viscosityU = .01;
-  }
-
-
+  });
 
   this.particles    = [];
 
@@ -202,11 +139,11 @@ function ParticleEmitter( params ){
  
   this.scene.add( this.mesh );
 
+  scene.add( this.mesh );
   this.scene.postion = this.position;
 
-  particleScene.add( this.scene );
-  
-  particleEmitters.push( this );
+  console.log( 'pos' );
+  console.log( this.position );
 
 }
 
@@ -217,7 +154,7 @@ Particle.prototype = {
   update:function(){
 
     this.position.add( this.velocity );
-    //this.velocity.multiplyScalar( this.viscosity );
+    this.velocity.multiplyScalar( this.viscosity );
     this.mesh.position = this.position;
 
     // Scales the meshes so that they
@@ -230,14 +167,14 @@ Particle.prototype = {
   },
 
   suicide:function(){
-    particleScene.remove( this.mesh );
+    this.emitter.scene.remove( this.mesh );
   }
 
 
 
 }
 
-function Particle( e , explode , mat  ){
+function Particle( e , mat ){
 
   // using e for emitter, just for shorter code
   // I know its non descriptive, but pretty is 
@@ -246,27 +183,10 @@ function Particle( e , explode , mat  ){
 
   this.position = e.position.clone();
 
-  if( !explode ){
-
-    this.velocity = e.velocity.clone();
-
-    this.velocity.x += M.randomRange( .01 );
-    this.velocity.y += M.randomRange( .01 );
-    this.velocity.z += M.randomRange( .01 );
-
-
-    this.velocity.x *= 1 + M.randomRange( e.velocityU );
-    this.velocity.y *= 1 + M.randomRange( e.velocityU );
-    this.velocity.z *= 1 + M.randomRange( e.velocityU );
-
-  }else{
-
-    this.velocity = new THREE.Vector3();
-    this.velocity.x += M.randomRange( .03 );
-    this.velocity.y += M.randomRange( .03 );
-    this.velocity.z += M.randomRange( .03 );
-
-  }
+  this.velocity = new THREE.Vector3();
+  this.velocity.x += M.randomRange( .03 );
+  this.velocity.y += M.randomRange( .03 );
+  this.velocity.z += M.randomRange( .03 );
 
   var material = e.material;
 
@@ -282,7 +202,7 @@ function Particle( e , explode , mat  ){
 
   e.particles.push( this );
 
-  particleScene.add( this.mesh );
+  e.scene.add( this.mesh );
 
   this.update();
 
@@ -300,59 +220,12 @@ function initEmitters(){
 
   scene.add( particleScene );
 
-  for( var i = 0 ; i < 12; i++ ){
-
-    var emitter = new ParticleEmitter();
-
-  }
-
   cornerEmitter = new ParticleEmitter();
 
+  console.log( cornerEmitter.scene );
+  scene.add( cornerEmitter.scene );
+
+
 }
 
 
-function updateEmitters(){
-
-  emitterClock += 1;
-
-  for( var i = 0;  i < particleEmitters.length; i++ ){
-
-    var emitter = particleEmitters[i];
-
-    emitter.update();
-
-    if( intersections[i] && oIntersections[i] ){
-
-      emitter.oPosition = emitter.position.clone();
-
-      emitter.position.x = intersections[i][0][0]; 
-      emitter.position.y = intersections[i][0][1]; 
-      emitter.position.z = intersections[i][0][2];
-
-      emitter.scene.position = emitter.position;
-
-      emitter.velocity.subVectors( emitter.position , emitter.oPosition );
-
-      if( emitterClock % 800000 == 0 )
-        emitter.emitParticles( 1 );
-      
-    // Juste gained this particleEmitter
-    }else if( intersections[i] ){
-
-      //emitter.birth();
-
-    // Just lost this particleEmitter
-    }else if( oIntersections[i] ){
-
-      //emitter.death();
-      emitter.position.x = 10000;
-
-    }else{
-
-
-    }
-
-
-  }
-
-}

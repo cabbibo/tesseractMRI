@@ -34,21 +34,35 @@
 
     var app  = new App();
 
+    app.ui2d = new Controller2D();
+    app.ui3d = new Controller3D();
+
+    app.ui2d.particleEmitter = new ParticleEmitter();
+    console.log( app.ui2d.renderer.flatScene );
+    app.ui2d.renderer.flatScene.add( app.ui2d.particleEmitter );
+
+    app.ui3d.particleEmitter = new ParticleEmitter();
+
     app.update = function(){
 
       drawIntersections();
       checkForHitCorners();
-      updateEmitters();
-
+      
       //tesseractScene.rotation.y += .01;
       //particleScene.rotation.y += .01;
 
+      app.ui2d.update();
+      app.ui3d.update();
 
     }
 
     app.cornerHit = function(i){
 
+      // Gets a position based 
       var p = getCornerPosition( hitCorners[i][0] );
+
+      //
+      console.log( corners[hitCorners[i][0]] );
 
       cornerEmitter.position = convertToThree( p[0] );
       cornerEmitter.scene.position = cornerEmitter.position;
@@ -63,8 +77,9 @@
         console.log('WTF');
       }
 
+      app.ui2d.checkCornerHit( corners[hitCorners[i][0]] , hitCorners[i][1] );
 
-      cornerEmitter.position.x = 100000;
+      //cornerEmitter.position.x = 100000;
 
     }
 
