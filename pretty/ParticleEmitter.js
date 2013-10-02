@@ -35,9 +35,9 @@ var particleMaterials = [
     shinines:     100000,
     ambient:      0x44cc44,
     shading:      THREE.FlatShading,
-    wireframe:    true,
-    opacity:      .3,
-    transparent:  true
+    //wireframe:    true,
+    //opacity:      .5,
+    //transparent:  true
         
   }),
 
@@ -51,9 +51,9 @@ var particleMaterials = [
     shinines:     100000,
     ambient:      0xcc4444,
     shading:      THREE.FlatShading,
-    wireframe:    true,
-    opacity:      .3,
-    transparent:  true
+    //wireframe:    true,
+    //opacity:      .5,
+    //transparent:  true
         
   }),
 
@@ -67,9 +67,9 @@ var particleMaterials = [
     shinines:     100000,
     ambient:       0x4444aa,
     shading:      THREE.FlatShading,
-    wireframe:    true,
-    opacity:      .3,
-    transparent:  true
+    //wireframe:    true,
+    //opacity:      .5,
+    //transparent:  true
         
   }),
   //new THREE.MeshLambertMaterial({ color:0xaaffaa }),  //Life
@@ -237,9 +237,9 @@ Particle.prototype = {
   update:function(audio){
 
     //console.log( audio );
-    this.mesh.rotation.x += audio / 2000;
-    this.mesh.rotation.y += audio / 3000;
-    this.mesh.rotation.z += audio / 4000;
+    this.mesh.rotation.x += Math.sin( audio )  / 200;
+    this.mesh.rotation.y += Math.cos( audio )  / 200;
+    this.mesh.rotation.z += Math.tan( audio )  / 200;
 
     //debugger
     this.velocity.multiplyScalar( (1 + audio/100000 ));

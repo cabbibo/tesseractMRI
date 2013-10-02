@@ -5,23 +5,6 @@ var equations , corners , plane;
 var intersections   = [];
 var oIntersections  = [];
 
-
-var flipToZMatrix = [
-  1 , 0 ,  0 , 0 , 
-  0 , 0 , -1 , 0 ,
-  0 , 1 ,  0 , 0 ,
-  0 , 0 ,  0 , 1
-]
-
-
-var flipToZMatrixInverse = [
-  1 ,  0 , 0 , 0 , 
-  0 ,  0 , 1 , 0 ,
-  0 , -1 , 0 , 0 ,
-  0 ,  0 , 0 , 1
-]
-
-
 var rotationMatrix , rotationMatrixT;
 
 var initMath = function(){
@@ -173,9 +156,9 @@ function loopThroughIntersections(){
 
 function returnAllBasis( p ){
 
+  // Flattens point
   var fP = [];  
   vec4.transformMat4( fP  , p , rotationMatrixT );
-
 
   point = [
     [ fP[0] , fP[1] , fP[2] ],   // Flattened
@@ -205,23 +188,16 @@ function getCornerPosition( i ){
 
 }
 
-
 /*Function to return a 4x4 rotation matrix which sends n (any unit \
 vector) to e4 = (0,0,0,1) by rotating along the great circle \
 determined by n and e4*/
 
 function rotationToW( plane ){
 
-
   var toNormalize = [ plane[0] , plane[1] , plane[2],  plane[3] ];
 
   var n = [];
   vec4.normalize( n , toNormalize );
-
-  var newN = [];
-  vec4.transformMat4( newN , n , flipToZMatrix );
-
-  n = newN;
   
   //console.log( n );//var n = [ normal[0] , normal[1] , normal[2] , normal[3] ];
 
@@ -397,6 +373,11 @@ function rotationToW( plane ){
     ];
 
 
+    // TODO: SUM FUKD UP SHIT IS GOING ON HERE
+    // TODO: FIX IT
+    // TODO: NOW
+   
+    
     //console.log('u');
     //console.log( U );
     R = [];
@@ -410,24 +391,14 @@ function rotationToW( plane ){
     //console.log( 'R' );
     //console.log( R );
 
-    //return R
+    return R
 
   }else{
 
-    //return R
+    return R
 
   }
   
-
-  var newR = [];
-  mat4.multiply( newR , R , flipToZMatrixInverse );
-
-  var R = [];
-
-  mat4.multiply( R , flipToZMatrix , newR );
-
-
-  return R
 }
 
 

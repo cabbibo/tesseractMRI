@@ -36,11 +36,9 @@ function Controller2D( params ){
   this.math     = new Math2D( this );
   this.renderer = new Renderer2D( this );
 
-  this.renderer.scene.position.y =  -1.5;
-  this.renderer.scene.position.x = -2.5;
+  this.renderer.scene.position.z =  0;
+  this.renderer.scene.position.x = -3;
 
-  this.renderer.scene.scale.multiplyScalar( .3 );
-  
   // TODO: place renderer.scene properly
   scene.add( this.renderer.scene );
 
@@ -216,29 +214,12 @@ function Renderer2D( controller ){
     shinines:     100000,
     ambient:      0xE870D0,
     shading:      THREE.FlatShading,
-    //opacity:      .5,
+    opacity:      .5,
     transparent:  true
         
     });
 
   this.wireframeMaterial    = new THREE.MeshPhongMaterial({
-
-   
-    color:        0xaaaaaa,
-    emissive:     0xaaaaaa,
-    specular:     0xaaaaaa,
-    diffuse:      0xaaaaaa,
-    shinines:     1000,
-    ambient:      0xaaaaaa,
-    shading:      THREE.FlatShading,
-    opacity:      .5,
-    //wireframe:    true,
-    //wireframeLinewidth: 4,
-    transparent:  true
-        
-  });
-
-  this.wireframeMaterial = new THREE.MeshPhongMaterial({
 
    
     color:        0x3F6D82,
@@ -247,11 +228,11 @@ function Renderer2D( controller ){
     diffuse:      0x8F7845,
     shinines:     100000,
     ambient:      0xE870D0,
-    shading:      THREE.SmoothShading,
+    shading:      THREE.FlatShading,
     opacity:      .5,
     transparent:  true
         
-  });  
+    });
 
   this.connectorMaterial    = new THREE.LineBasicMaterial({
   
@@ -262,45 +243,6 @@ function Renderer2D( controller ){
   this.geometry             = new THREE.CubeGeometry( .1 , .1 , .1 );
 
   this.scene                = new THREE.Object3D();
-
-  this.title                = textCreator.createMesh({
-   
-    string:"1D slices of 2D",
-    size: 100
-
-  });
-
-  this.title.scale.multiplyScalar( .002 );
-  this.scene.add( this.title );
-
-  this.title.position.y = 1;
-  this.title.position.x = .5;
-  this.title.position.z = -.5;
-
-  var geo = new THREE.PlaneGeometry( 3.4 , 2.1 );
-  var mat = new THREE.MeshPhongMaterial({
-
-   
-    color:        0x3F6D82,
-    emissive:     0x994A89,
-    specular:     0x8F7845,
-    diffuse:      0x8F7845,
-    shinines:     100000,
-    ambient:      0xE870D0,
-    shading:      THREE.FlatShading,
-    opacity:      .5,
-    transparent:  true
-        
-  });  
-  
-  this.border = new THREE.Mesh( geo , mat );
-
-  this.border.position.z = -.6;
-  this.border.position.x =  .5;
-  this.border.position.y =  .25;
-  this.scene.add( this.border );
-
-
 
   this.initFullScene();
   this.initFlatScene();
@@ -329,8 +271,6 @@ Renderer2D.prototype = {
     // First off draw a plane
     var geo = new THREE.PlaneGeometry( 1 , 1 );
     this.fullScene.wireframe = new THREE.Mesh( geo , this.wireframeMaterial );
-
-    this.fullScene.wireframe.scale.multiplyScalar( .8 );
 
    
     // Need to make sure to center it
@@ -362,8 +302,8 @@ Renderer2D.prototype = {
     for( var i = 0; i < 2; i++ ){
       
       var mesh = new THREE.Mesh( this.geometry , this.material );
-      var light = new THREE.PointLight( this.color , 3 , .3 );
-     // mesh.add( light );
+      var light = new THREE.PointLight( this.color , 50 , .3 );
+      mesh.add( light );
 
 
       this.fullScene.intersections.push( mesh );
@@ -373,8 +313,8 @@ Renderer2D.prototype = {
      
     // Placing the scene
     // So that the box which we moved up is centered
-    this.fullScene.position.x = 1;
-    this.fullScene.position.y = -.5;
+    this.fullScene.position.x = -.5 ;
+    this.fullScene.position.y = .25 ;
 
     //Finally adding it to the scene
     this.scene.add( this.fullScene  );
@@ -394,7 +334,7 @@ Renderer2D.prototype = {
     // Lets get a light in here
     this.flatScene.light = new THREE.PointLight( this.color , 1 , 1 );
     this.flatScene.light.position.z = .25;
-    //this.flatScene.add( this.flatScene.light );
+    this.flatScene.add( this.flatScene.light );
 
     
     // Creating our connector
@@ -420,7 +360,7 @@ Renderer2D.prototype = {
     }
      
     // Placing the scene
-    this.flatScene.position.y = 0;
+    this.flatScene.position.y = -.25;
 
     //Finally adding it to the scene
     this.scene.add( this.flatScene  );

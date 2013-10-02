@@ -15,8 +15,8 @@ var particleMaterials = [
    
     color:        0x3F6D82,
     emissive:     0x994A89,
-    specular:     0x8F7845,
-    diffuse:      0x8F7845,
+    specular:     0xffffff,
+    diffuse:      0xffffff,
     shinines:     100000,
     ambient:      0xE870D0,
     shading:      THREE.FlatShading,
@@ -30,14 +30,14 @@ var particleMaterials = [
    
     color:        0x66aaaa,
     emissive:     0x66aaaa,
-    specular:     0x66aaaa,
-    diffuse:      0x66aaaa,
+    specular:     0xffffff,
+    diffuse:      0xffffff,
     shinines:     100000,
     ambient:      0x44cc44,
-    shading:      THREE.FlatShading,
-    wireframe:    true,
-    opacity:      .3,
-    transparent:  true
+    shading:      THREE.SmoothShading,
+    //wireframe:    true,
+    //opacity:      .3,
+    //transparent:  true
         
   }),
 
@@ -46,14 +46,14 @@ var particleMaterials = [
    
     color:        0xcc4444,
     emissive:     0xcc4444,
-    specular:     0xcc4444,
-    diffuse:      0xcc4444,
+    specular:     0xffffff,
+    diffuse:      0xffffff,
     shinines:     100000,
     ambient:      0xcc4444,
-    shading:      THREE.FlatShading,
-    wireframe:    true,
-    opacity:      .3,
-    transparent:  true
+    shading:      THREE.SmoothShading,
+    //wireframe:    true,
+    //opacity:      .3,
+    //transparent:  true
         
   }),
 
@@ -62,14 +62,14 @@ var particleMaterials = [
    
     color:        0x4444cc,
     emissive:     0x4444cc,
-    specular:     0x4444cc,
-    diffuse:      0x4444aa,
+    specular:     0xffffff,
+    diffuse:      0xffffff,
     shinines:     100000,
     ambient:       0x4444aa,
-    shading:      THREE.FlatShading,
-    wireframe:    true,
-    opacity:      .3,
-    transparent:  true
+    shading:      THREE.SmoothShading,
+    //wireframe:    true,
+    //opacity:      .3,
+    //transparent:  true
         
   }),
   //new THREE.MeshLambertMaterial({ color:0xaaffaa }),  //Life
@@ -234,7 +234,7 @@ function ParticleEmitter( params ){
 Particle.prototype = {
 
 
-  update:function(audio){
+  update:function( audio ){
 
     //console.log( audio );
     this.mesh.rotation.x += audio / 2000;
@@ -245,7 +245,7 @@ Particle.prototype = {
     this.velocity.multiplyScalar( (1 + audio/100000 ));
     this.velocity.z = - Math.abs( this.velocity.z )
     this.position.add( this.velocity );
-    //this.velocity.multiplyScalar( this.viscosity );
+    
     this.mesh.position = this.position;
 
     //this.mesh.rotation.x += 
@@ -254,9 +254,13 @@ Particle.prototype = {
     // shrink as they get closer to death
     var r  = 2 - this.mesh.geometry.boundingSphere.radius;
 
-    this.mesh.scale.x = this.age * r// * (1 + audio/256 );
-    this.mesh.scale.y = this.age * r// * (1 + audio/256 );
-    this.mesh.scale.z = this.age * r// * (1 + audio/256 );
+    var r =this.mesh.geometry.boundingSphere.radius - 2
+    this.r = 1/ ( 1 / (r*r));
+
+    this.r = 1;
+    this.mesh.scale.x = this.age * this.r// * (1 + audio/256 );
+    this.mesh.scale.y = this.age * this.r// * (1 + audio/256 );
+    this.mesh.scale.z = this.age * this.r// * (1 + audio/256 );
 
  
   },
@@ -279,9 +283,9 @@ function Particle( e , mat  ){
   this.position = e.position.clone();
 
   this.velocity = new THREE.Vector3();
-  this.velocity.x += M.randomRange( .03 );
-  this.velocity.y += M.randomRange( .03 );
-  this.velocity.z += M.randomRange( .03 );
+  this.velocity.x += M.randomRange( .05 );
+  this.velocity.y += M.randomRange( .05 );
+  this.velocity.z -= M.random( .0001 );
 
   var material = e.material;
 

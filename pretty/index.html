@@ -13,9 +13,9 @@
 
   
   <script src = "../lib/gl-matrix-min.js" >                             </script>
-  <script src = "../lib/2d.js">                                         </script>
-  <script src = "../lib/3d.js">                                         </script>
-  <script src = "../lib/4d.js">                                         </script>
+  <script src = "2d.js">                                         </script>
+  <script src = "3d.js">                                         </script>
+  <script src = "4d.js">                                         </script>
   <script src = "../lib/loop.js">                                       </script>
   <script src = "../lib/audio.js">                                      </script>
   <script src = "../lib/scene.js">                                      </script>
@@ -34,23 +34,16 @@
 
     var app  = new App();
 
-    app.ui2d = new Controller2D();
-    app.ui3d = new Controller3D();
-
-    //consol
     stats.domElement.style.display = "none";
+
+    scene.fog.near = 1.5;
+    scene.fog.far  = 6;
 
     app.update = function(){
 
       drawIntersections();
       checkForHitCorners();
       updateEmitters();
-
-      this.ui2d.update();
-      this.ui3d.update();
-
-      //tesseractScene.rotation.y += .01;
-      //particleScene.rotation.y += .01;
 
 
     }
@@ -63,11 +56,11 @@
       cornerEmitter.scene.position = cornerEmitter.position;
 
       if( hitCorners[i][1] == "life" ){
-        //cornerEmitter.birth();
+        cornerEmitter.birth();
       }else if( hitCorners[i][1] == "death" ){
-        //cornerEmitter.death();
+        cornerEmitter.death();
       }else if( hitCorners[i][1] == "sleep" ){
-        //cornerEmitter.sleep();
+        cornerEmitter.sleep();
       }else{
         console.log('WTF');
       }
