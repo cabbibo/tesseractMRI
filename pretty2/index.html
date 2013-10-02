@@ -86,17 +86,22 @@
       checkForHitCorners();
       updateEmitters();
 
+      
+      updateTesseractModel();
+
       this.ui2d.update();
       this.ui3d.update();
+
+
 
 
       this.particleRing.update();
 
       this.updateMandalas();
 
-      tesseractModel.rotation.x += .01;
-      tesseractModel.rotation.y += .02;
-      tesseractModel.rotation.z += .003;
+     // tesseractModel.rotation.x += .008;
+     // tesseractModel.rotation.y += .005;
+     // tesseractModel.rotation.z += .003;
       //tesseractScene.rotation.y += .01;
       //particleScene.rotation.y += .01;
 

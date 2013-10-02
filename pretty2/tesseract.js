@@ -114,20 +114,81 @@ function initTesseractModel(){
 
     corner.position = geo.vertices[i].clone();
 
-    tesseractModel.add( corner );
+    //tesseractModel.add( corner );
 
     tesseractModel.corners.push( corner );
 
   }
 
 
-  tesseractModel.rotation.x = .3;
-  tesseractModel.rotation.y = .3;
-  tesseractModel.rotation.z = .3;
+  tesseractModel.intersections = [];
+  for( var i = 0;  i< 12; i ++ ){
 
-  tesseractModel.position.y = 1.5;
+   var intersection = new THREE.Mesh( cornerGeo , particleMaterials[0] );
+   tesseractModel.intersections.push( intersection );
 
-  tesseractModel.scale.multiplyScalar( .1 );
+   tesseractModel.add( intersection );
+
+  }
+
+  //tesseractModel.rotation.x = .1;
+  //tesseractModel.rotation.y = .3;
+  //tesseractModel.rotation.z = .3;
+
+  //tesseractModel.position.y = 1.5;
+
+  tesseractModel.scale.multiplyScalar( .5 );
 
 
 }
+
+
+function updateTesseractModel(){
+
+
+  for( var i=0; i < 12; i ++ ){
+
+    if( modelIntersections[i] ){
+      
+      var pos = convertToModelSpace( modelIntersections[i] );
+      tesseractModel.intersections[i].position = pos;
+
+    }else{
+ 
+      // get it out of
+      tesseractModel.intersections[i].position.x = 100000;
+
+    }
+
+
+  }
+
+}
+
+
+function convertToModelSpace( position ){
+
+  var x = position[0];
+  var y = position[1];
+  var z = position[2];
+  var w = position[3];
+
+
+  x -= .5;
+  y -= .5;
+  z -= .5;
+
+  //x = ( x < 0 ) ? x - 1 : x + 1;
+  //y = ( y < 0 ) ? y - 1 : y + 1;
+  //z = ( z < 0 ) ? z - 1 : z + 1;
+    
+  x *=2* (w+1);
+  y *=2* (w+1);
+  z *=2* (w+1);
+
+  var pos = new THREE.Vector3( x , y , z );
+  return pos;
+
+}
+
+
