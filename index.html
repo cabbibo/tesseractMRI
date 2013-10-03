@@ -11,45 +11,45 @@
     </style>
 
   </head>
-<body style="background:#000">
   
+  <body style="background:#000">
+  
+  <script src = "/allSiteLib/three.min.js" >                                </script>
+  <script src = "/allSiteLib/ConvexGeometry.js" >                           </script>
+  
+  <script src = "/allSiteLib/OrbitControls.js" >                            </script>
+  <script src = "/allSiteLib/leap.js" >                                     </script>
+  <script src = "/allSiteLib/stats.min.js" >                                </script>
+  <script src = "/allSiteLib/underscore.js" >                               </script>
+  <script src = "/allSiteLib/js/AUDIO.js" >                                 </script>
+  <script src = "/allSiteLib/math.js" >                                     </script>
+  <script src = "/allSiteLib/js/OBJloader.js">                              </script>
+  
+  <script src = "lib/gl-matrix-min.js" >                                    </script>
+  <script src = "lib/textureFromString.js">                                 </script>
+  <script src = "lib/2d.js">                                                </script>
+  <script src = "lib/3d.js">                                                </script>
+  <script src = "lib/4d.js">                                                </script>
+  <script src = "lib/loop.js">                                              </script>
+  <script src = "lib/audio.js">                                             </script>
+  <script src = "lib/scene.js">                                             </script>
+  <script src = "lib/Tween.js">                                             </script>
+  <script src = "lib/sliding.js">                                           </script>
+  <script src = "lib/jquery-1.7.1.min.js">                                  </script>
+  <script src = "lib/keyStrokes.js">                                        </script>
+  
+  <script src = "lib/App.js">                                               </script>
 
-
-  <script src = "/allSiteLib/three.min.js" >                            </script>
-  <script src = "/allSiteLib/ConvexGeometry.js" >                       </script>
-  
-  <script src = "/allSiteLib/OrbitControls.js" >                        </script>
-  <script src = "/allSiteLib/leap.js" >                                 </script>
-  <script src = "/allSiteLib/stats.min.js" >                            </script>
-  <script src = "/allSiteLib/underscore.js" >                           </script>
-  <script src = "/allSiteLib/js/AUDIO.js" >                             </script>
-  <script src = "/allSiteLib/math.js" >                                 </script>
-  <script src = "/allSiteLib/js/OBJloader.js">                          </script>
-  
-  <script src = "../lib/gl-matrix-min.js" >                             </script>
-  <script src = "../lib/textureFromString.js">                          </script>
-  <script src = "../lib/2d.js">                                         </script>
-  <script src = "../lib/3d.js">                                         </script>
-  <script src = "../lib/4d.js">                                         </script>
-  <script src = "../lib/loop.js">                                       </script>
-  <script src = "../lib/audio.js">                                      </script>
-  <script src = "../lib/scene.js">                                      </script>
-  <script src = "../lib/Tween.js">                                      </script>
-  <script src = "../lib/sliding.js">                                    </script>
-  <script src = "../lib/jquery-1.7.1.min.js">                           </script>
-  <script src = "../lib/keyStrokes.js">                                 </script>
-  
-  <script src = "../lib/App.js">                                        </script>
-
-  <script src = "boxHelper.js" >                                        </script>
-  <script src = "perlin.js">                                            </script>
-  <script src = "ParticleEmitter.js">                                   </script>
-  <script src = "mandala.js">                                           </script>
-  <script src = "particleRing.js">                                      </script>
-  <script src = "tesseract.js">                                         </script>
+  <script src = "lib/boxHelper.js" >                                        </script>
+  <script src = "lib/perlin.js">                                            </script>
+  <script src = "lib/ParticleEmitter.js">                                   </script>
+  <script src = "lib/mandala.js">                                           </script>
+  <script src = "lib/particleRing.js">                                      </script>
+  <script src = "lib/tesseract.js">                                         </script>
   
   <div id="container" style="position:absolute;top:0;left:0"></div>
-  
+  <div id="curtain"></div>
+
   <div style="font-family: GeoSans; color: #fff; position:absolute; top: 0px; visibility:hidden;">Disgusting CSS Hack</div>
 
   <script>
@@ -156,12 +156,8 @@
     }
 
     function initUI(){
-    //masterGain.gain.value = 0;
 
       textCreator = new THREE.TextCreator();
-
-      console.log( textCreator );
-
 
       app.ui2d = new Controller2D();
       app.ui3d = new Controller3D();
@@ -196,47 +192,18 @@
       app.projectionScene.add( app.particleRing.scene );
       app.projectionScene.add( tesseractModel );
       tesseractModel.scale.multiplyScalar( .2 );
-      //app.particleRing.scene.position.z = -2.5;
+      
       app.projectionScene.position.x = 0;
 
       app.projectionScene.active = true;
 
-
       slides = [ app.uiScene , app.projectionScene , app.sliceScene ];
-
 
     }
 
     // Starting our function after the font
     // has been loaded
     setTimeout( initUI , 1000 );
-
-
-    function triggerAwesome(){
-
-      scene.remove( app.ui2d.renderer.scene );
-      scene.remove( app.ui3d.renderer.scene );
-      
-      scene.add( app.particleRing.scene );
-      scene.add( app.mandalaScene );
-
-
-      AWESOME = true;
-
-    }
-
-    function triggerNormal(){
-
-      scene.remove( app.particleRing.scene );
-      scene.remove( app.mandalaScene );
-
-      scene.add( app.ui2d.renderer.scene );
-      scene.add( app.ui3d.renderer.scene );
-
-      AWESOME = false;
-
-    }
-
 
   </script>
 
