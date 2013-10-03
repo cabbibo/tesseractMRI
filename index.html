@@ -21,7 +21,6 @@
   <script src = "/allSiteLib/leap.js" >                                     </script>
   <script src = "/allSiteLib/stats.min.js" >                                </script>
   <script src = "/allSiteLib/underscore.js" >                               </script>
-  <script src = "/allSiteLib/js/AUDIO.js" >                                 </script>
   <script src = "/allSiteLib/math.js" >                                     </script>
   <script src = "/allSiteLib/js/OBJloader.js">                              </script>
   
@@ -46,13 +45,17 @@
   <script src = "lib/mandala.js">                                           </script>
   <script src = "lib/particleRing.js">                                      </script>
   <script src = "lib/tesseract.js">                                         </script>
-  
+  <script src = "lib/loader.js">                                            </script>
+
+
   <div id="container" style="position:absolute;top:0;left:0"></div>
   <div id="curtain"></div>
 
   <div style="font-family: GeoSans; color: #fff; position:absolute; top: 0px; visibility:hidden;">Disgusting CSS Hack</div>
 
   <script>
+
+    var loader = new LOADER( 17 , '/allSiteLib/gifs/cablogGif50White.gif' );
 
     var app , textCreator , slides;
 
@@ -78,11 +81,9 @@
     app  = new App();
     
     app.particleRing = new ParticleRing();
-    //scene.remove( app.particleRing );
 
     initTesseractModel();
 
-    console.log( app );
 
     //tween = new TWEEN();
 
@@ -203,7 +204,7 @@
 
     // Starting our function after the font
     // has been loaded
-    setTimeout( initUI , 1000 );
+    //setTimeout( initUI , 1000 );
 
   </script>
 
