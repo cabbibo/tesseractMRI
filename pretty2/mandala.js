@@ -163,60 +163,74 @@ MANDALA.prototype = {
     }
 
 
+    var mandalaGeo, mandalaData;
+    
+    var mat = particleMaterials[0].clone()
+    mat.color.r = .3;
+    mat.color.g = .3;
+    mat.color.b = .3;
+
+    console.log( mat );
+    //mat.wireframe = true;
+    mat.opacity = .9;
+    mat.transparent = true;
+
     function initMandala(){
+
+      mandalaGeo = modelGeometries[5];
+      mandalaData = mandalaGeo.clone();
 
       app.mandalaScene = new THREE.Object3D();
       app.mandalaScene.rotation.x = Math.PI/2;
-      app.mandalaScene.position.z = -1;
-     // scene.add( app.mandalaScene );
+      app.mandalaScene.position.z = -2.5;
+
+      scene.add( app.mandalaScene );
       app.mandalas = [];
 
       console.log( particleMaterials );
       for( var i = 0; i< 20; i ++){
           var mandala = new MANDALA(
              1/50  ,
-            [ 1 , 1, 1, 1 , 1,1 ,1 ],
-            [ 1 , 1 , 1 , 1,1 ,1,1],
+            [ 4 , 5, 1 ],
+            [ .5 , .4, 1],
 
             // 3 , 5 , 7 , 9 , 10, 11, 12, 13! , 15! , 16 , 17 
             [ 
-              modelGeometries[0], 
-              modelGeometries[1], 
-              modelGeometries[2], 
-              modelGeometries[3],
-              modelGeometries[4],
-              modelGeometries[5],
-              modelGeometries[6]
+              mandalaGeo,             
+              mandalaGeo,             
+              mandalaGeo             
             ],
             [ 
-              particleMaterials[0], 
-              particleMaterials[1], 
-              particleMaterials[2], 
-              particleMaterials[3], 
-              particleMaterials[2], 
-              particleMaterials[1], 
-              particleMaterials[3] 
-
+             mat,
+             mat,
+             mat
+             
             ],
-            [ 1, 1, 1 , 1, 1 , 1, 1]
+            [ 1, 1, 1 ]
 
 
             );
+
             mandala.scene.rotation.y = i / 20 * Math.PI * 2;
             //mandala.scene.rotation.x = i / 5 * Math.PI * 2;
 
             console.log( mandala );
             app.mandalaScene.add( mandala.scene );
             app.mandalas.push( mandala );
+        
 
       }
 
       app.updateMandalas = function(){
 
-        for( var i = 0; i < app.mandalas[0].geoArray.length; i ++ ){
+        //for( var i = 0; i < app.mandalas[0].geoArray.length; i ++ ){
+          
 
-          var geo   = app.mandalas[0].geoArray[i];
-          var data  = app.mandalas[0].dataArray[i];
+          
+          var geo  = mandalaGeo;
+          var data = mandalaData; 
+          //var geo   = app.mandalas[0].geoArray[i];
+          //var data  = app.mandalas[0].dataArray[i];
 
           
           for( var j = 0; j < geo.vertices.length; j++ ){
@@ -236,7 +250,7 @@ MANDALA.prototype = {
 
           geo.verticesNeedUpdate = true;
 
-        }
+        //}
 
 
       }

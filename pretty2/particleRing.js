@@ -7,7 +7,7 @@ function ParticleRing( params ){
     color:0xff0000,
     numOfParticles: 200,
     numOfRings:     80,
-    size:           2,
+    size:           .5,
 
   });
 
@@ -46,24 +46,25 @@ function ParticleRing( params ){
   for( var i = 0; i < this.numOfRings; i++ ){
 
     var c = new THREE.Color();
-    c.r = ( i / this.numOfRings );
-    c.b = .5;
-    c.g = .7;
+    c.r = .3//( i / this.numOfRings );
+    c.b = .3;
+    c.g = .3;
     
     var material = new THREE.ParticleBasicMaterial({
       color: c,
       //map: this.image,
-      size: .04,
+      size: .02,
       blending: THREE.AdditiveBlending,
-      opacity: .9,
+      opacity: .99,
       transparent: true//color
     });
 
     // TODO: Make rings
     var ring = new THREE.ParticleSystem( this.geometry, material );
 
-    ring.position.z = ( -i/20);
-    //ring.scale.multiplyScalar( 1 + (i / this.numOfRings ));
+    
+    ring.position.z = 0//( -i/20);
+    ring.scale.multiplyScalar( 1 + (i / this.numOfRings ));
 
     this.rings.push( ring );
     this.scene.add( ring );

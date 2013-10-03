@@ -34,8 +34,7 @@ var tesseractCorners = [
 function initTesseractModel(){
 
   tesseractModel = new THREE.Object3D();
-  scene.add( tesseractModel );
-
+  
   var lineMat = new THREE.LineBasicMaterial();
 
   var geo = new THREE.Geometry();
@@ -97,6 +96,7 @@ function initTesseractModel(){
   tesseractModel.corners = [];
 
   var cornerGeo = new THREE.IcosahedronGeometry( .3 , 1 );
+  var intersectGeo = new THREE.IcosahedronGeometry( .3 , 1 );
   for( var i = 0; i < geo.vertices.length; i ++ ){
 
     
@@ -106,7 +106,7 @@ function initTesseractModel(){
 
     //for( var j = 0; j < 8; j++ ){
     
-      var corner = new THREE.Mesh( cornerGeo , particleMaterials[0] );
+      var corner = new THREE.Mesh( cornerGeo , particleMaterials[0].clone() );
       //c.rotation.z = Math.PI * 2 * ( j / 8 );
       //corner.add( c );
 
@@ -114,7 +114,7 @@ function initTesseractModel(){
 
     corner.position = geo.vertices[i].clone();
 
-    //tesseractModel.add( corner );
+    tesseractModel.add( corner );
 
     tesseractModel.corners.push( corner );
 
@@ -124,7 +124,7 @@ function initTesseractModel(){
   tesseractModel.intersections = [];
   for( var i = 0;  i< 12; i ++ ){
 
-   var intersection = new THREE.Mesh( cornerGeo , particleMaterials[0] );
+   var intersection = new THREE.Mesh( cornerGeo , particleMaterials[0].clone() );
    tesseractModel.intersections.push( intersection );
 
    tesseractModel.add( intersection );
@@ -137,8 +137,12 @@ function initTesseractModel(){
 
   //tesseractModel.position.y = 1.5;
 
-  tesseractModel.scale.multiplyScalar( .5 );
+  tesseractModel.cornerHit = function(whichCorner , type ){
 
+
+
+
+  }
 
 }
 
@@ -160,6 +164,12 @@ function updateTesseractModel(){
 
     }
 
+  }
+
+
+  for( var i = 0; i < tesseractModel.corners.length; i ++ ){
+
+    tesseractModel.corners[i].material.opacity -= .01;
 
   }
 

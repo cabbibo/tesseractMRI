@@ -99,11 +99,9 @@
 
       this.updateMandalas();
 
-     // tesseractModel.rotation.x += .008;
-     // tesseractModel.rotation.y += .005;
-     // tesseractModel.rotation.z += .003;
-      //tesseractScene.rotation.y += .01;
-      //particleScene.rotation.y += .01;
+      tesseractModel.rotation.x += .008;
+      tesseractModel.rotation.y += .005;
+      tesseractModel.rotation.z += .003;
 
     }
 
@@ -121,14 +119,16 @@
       //*if( AWESOME == true ){
 
         if( hitCorners[i][1] == "life" ){
-          tesseractModel.corners[ whichCorner ].material = particleMaterials[1];
+          tesseractModel.corners[ whichCorner ].material = particleMaterials[1].clone();
+          tesseractModel.corners[ whichCorner ].material.opacity = 1;
           //cornerEmitter.birth();
         }else if( hitCorners[i][1] == "death" ){
-          tesseractModel.corners[ whichCorner ].material = particleMaterials[2];
+          tesseractModel.corners[ whichCorner ].material = particleMaterials[2].clone();
+          tesseractModel.corners[ whichCorner ].material.opacity = 1;
           //cornerEmitter.death();
         }else if( hitCorners[i][1] == "sleep" ){
-
-          tesseractModel.corners[ whichCorner ].material = particleMaterials[3];
+          tesseractModel.corners[ whichCorner ].material = particleMaterials[3].clone();
+          tesseractModel.corners[ whichCorner ].material.opacity = 1;
           //cornerEmitter.sleep();
         }else{
           console.log('WTF');
@@ -154,11 +154,33 @@
       app.ui2d = new Controller2D();
       app.ui3d = new Controller3D();
 
-      app.ui2d.renderer.scene.position.y = 1.5;
-      app.ui3d.renderer.scene.position.y = 1.5;
-      //scene.add( app.particleRing.scene );
+      app.uiScene         = new THREE.Object3D();
+      app.projectionScene = new THREE.Object3D(); 
+      app.sliceScene      = new THREE.Object3D();
 
-      //stats.domElement.style.display = "none";
+      scene.add( app.uiScene );
+      scene.add( app.projectionScene );
+      scene.add( app.sliceScene );
+
+    
+      app.uiScene.add( app.ui2d.renderer.scene );
+      app.uiScene.add( app.ui3d.renderer.scene );
+
+      app.uiScene.position.x = -10;
+      app.uiScene.scale.multiplyScalar( .5 );
+      app.ui2d.renderer.scene.position.y = 1.5;
+      app.ui3d.renderer.scene.position.y = -1.5;
+
+
+      app.sliceScene.add( app.mandalaScene );
+      app.sliceScene.add( tesseractScene );
+      app.sliceScene.add( particleScene ); 
+      app.sliceScene.position.x = 10;
+      
+      app.projectionScene.add( app.particleRing.scene );
+      app.projectionScene.add( tesseractModel );
+      tesseractModel.scale.multiplyScalar( .2 );
+      app.projectionScene.position.x = 0;
 
 
     }

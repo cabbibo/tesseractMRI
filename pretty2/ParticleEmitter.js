@@ -36,8 +36,8 @@ var particleMaterials = [
     ambient:      0x44cc44,
     shading:      THREE.SmoothShading,
     //wireframe:    true,
-    //opacity:      .3,
-    //transparent:  true
+    opacity:      .3,
+    transparent:  true
         
   }),
 
@@ -52,8 +52,8 @@ var particleMaterials = [
     ambient:      0xcc4444,
     shading:      THREE.SmoothShading,
     //wireframe:    true,
-    //opacity:      .3,
-    //transparent:  true
+    opacity:      .3,
+    transparent:  true
         
   }),
 
@@ -68,8 +68,8 @@ var particleMaterials = [
     ambient:       0x4444aa,
     shading:      THREE.SmoothShading,
     //wireframe:    true,
-    //opacity:      .3,
-    //transparent:  true
+    opacity:      .3,
+    transparent:  true
         
   }),
   //new THREE.MeshLambertMaterial({ color:0xaaffaa }),  //Life
@@ -314,8 +314,6 @@ function initEmitters(){
   particleScene.position.x = -.5;
   particleScene.position.y = -.5;
   particleScene.position.z = -.5;
-
-  scene.add( particleScene );
 
   cornerEmitter = new ParticleEmitter();
 
