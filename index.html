@@ -1,3 +1,15 @@
+<!--
+  
+  HUGE THANKS GOES TO:
+
+  Eddie Lee     - For the brilliant selection method
+  Mr.Doob       - For three.js
+  Aaron Smith   - For Math Help
+
+
+-->
+
+
 <html>
   <head>
 
@@ -8,8 +20,27 @@
         src: url("/allSiteLib/GeosansLight.ttf");
       }
 
+      #takeMeHome{
+        background:url('/allSiteLib/cabLog25White.png');
+        position:absolute;
+        bottom:5px;
+        left:50%;
+        margin-left:-12.5px;
+        height:25px;
+        width:25px;
+        display:block;
+        border-radius:25px;
+        opacity:.6;
+      }
+
+      #takeMeHome:hover{
+        opacity:1;
+       
+      }
+
     </style>
 
+    <link href
   </head>
   
   <body style="background:#000">
@@ -47,15 +78,18 @@
   <script src = "lib/tesseract.js">                                         </script>
   <script src = "lib/loader.js">                                            </script>
 
+  <script src="/allSiteLib/js/compatibility.js"></script>
 
   <div id="container" style="position:absolute;top:0;left:0"></div>
-  <div id="curtain"></div>
 
+  <a id="takeMeHome" href="http://cabbibo.com/"></a>
   <div style="font-family: GeoSans; color: #fff; position:absolute; top: 0px; visibility:hidden;">Disgusting CSS Hack</div>
 
   <script>
 
     var loader = new LOADER( 17 , '/allSiteLib/gifs/cablogGif50White.gif' );
+    var slider = new SLIDER( 3 );
+
 
     var app , textCreator , slides;
 
@@ -91,9 +125,10 @@
 
       drawIntersections();
       checkForHitCorners();
-      //updateEmitters();
 
-      //tween.update();
+      slider.update();
+
+      TWEEN.update();
 
       if( app.projectionScene.active == true ){
         updateTesseractModel();
@@ -178,7 +213,11 @@
       app.uiScene.position.x = -10;
       app.uiScene.scale.multiplyScalar( .5 );
       app.ui2d.renderer.scene.position.y = 1.5;
+      app.ui2d.renderer.scene.position.x = -.6;
+
       app.ui3d.renderer.scene.position.y = -1.5;
+      app.ui3d.renderer.scene.position.x = -.6;
+
 
       app.uiScene.active = false;
 
